@@ -8,6 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+  <!-- Firebase (실시간 공유) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
   <style>
     :root {
       --bg: #f4f5fb;
@@ -538,6 +542,28 @@
     .hc-rate-item { width: 123px; display: flex; justify-content: center; position: relative; }
     .hc-rate-item::before { content: ''; position: absolute; top: 9px; left: 0; width: 100%; height: 6px; background: #e5e7eb; z-index: 0; }
     .hc-rate-val { background: #e5e7eb; padding: 2px 10px; font-size: 11px; font-weight: 800; color: #4b5563; z-index: 1; border-radius: 4px; }
+
+    /* ===== INLINE EDIT (더블클릭 수정) ===== */
+    .editable {
+      cursor: pointer; border-bottom: 1px dashed currentColor;
+      padding: 0 2px; border-radius: 3px; transition: background 0.15s;
+      position: relative;
+    }
+    .editable:hover { background: rgba(100,72,232,0.14); }
+    .edit-input {
+      font: inherit; color: var(--text1); background: #fff;
+      border: 1px solid var(--accent); border-radius: 4px;
+      padding: 0 4px; width: 90px; text-align: inherit; outline: none;
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    /* ===== SYNC BADGE ===== */
+    .sync-badge {
+      font-size: 11px; font-weight: 700; padding: 5px 11px;
+      border-radius: 20px; white-space: nowrap; cursor: default;
+    }
+    .sync-badge.sync-on  { background: var(--green-bg); color: var(--green); }
+    .sync-badge.sync-off { background: #eef0f8; color: var(--text3); }
   </style>
 </head>
 <body>
@@ -550,6 +576,10 @@
       <span class="logo-sub">Funnel Planner</span>
     </div>
     <div class="header-right">
+      <span id="syncBadge" class="sync-badge sync-off" title="공유 상태">● 로컬 전용</span>
+      <button class="btn btn-ghost" onclick="copyShareLink()" title="이 보드 링크 복사">
+        🔗 공유 링크
+      </button>
       <button class="btn btn-ghost" onclick="exportJSON()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         내보내기
@@ -792,6 +822,20 @@
 
 <script>
 // ================================================================
+//  FIREBASE 설정 (실시간 공유)
+// ----------------------------------------------------------------
+//  아래 5칸을 본인 Firebase 프로젝트 값으로 채우면 실시간 공유가 켜집니다.
+//  비워두면 자동으로 "로컬 전용"으로 동작합니다. (방법은 README 참고)
+// ================================================================
+const FIREBASE_CONFIG = {
+  apiKey:      "",   // 예: "AIzaSy...."
+  authDomain:  "",   // 예: "weit-planner.firebaseapp.com"
+  databaseURL: "",   // 예: "https://weit-planner-default-rtdb.firebaseio.com"
+  projectId:   "",   // 예: "weit-planner"
+};
+// 여러 보드를 쓰고 싶으면 주소 뒤에 #board=이름 을 붙이세요 (기본: weit-main)
+
+// ================================================================
 //  STATE
 // ================================================================
 const STAGES = [
@@ -845,6 +889,7 @@ let S = {
 // ================================================================
 function persist() {
   localStorage.setItem('weit_funnel_v2', JSON.stringify(S));
+  pushRemote(); // 실시간 공유 DB로 전송 (설정 안 됐으면 무시됨)
 }
 
 function loadState() {
@@ -960,7 +1005,7 @@ function renderFunnelGrid() {
   const ikiTrack = calcForward(S.ikiDB, S.rates.iki); // [13,5,4,3,2,2]
   const jikTrack = calcForward(S.jikDB, S.rates.jik); // [60,15,8,6,4,2]
 
-  function buildCard(label, color, target, track, rates, dbGoal, adBudget) {
+  function buildCard(label, color, target, track, rates, dbGoal, adBudget, key) {
     const dbCount = track[0];
     const dbPrice = dbGoal > 0 ? Math.round(adBudget / dbGoal) : 0;
 
@@ -1013,10 +1058,10 @@ function renderFunnelGrid() {
           <div class="funnel-color-bar" style="background:${color}"></div>
           <div>
             <div class="funnel-card-name">${label}</div>
-            <div class="funnel-card-sub">DB ${dbGoal}명 기준 순방향 계산 · 1인 DB ₩${fmt(dbPrice)}</div>
+            <div class="funnel-card-sub">DB ${ed(key + 'DB')}명 · 광고비 ${ed(key + 'AdBudget', 'won')} · 1인 DB ₩${fmt(dbPrice)}</div>
           </div>
           <div class="funnel-target-badge" style="background:${color}22;color:${color}">
-            센확 목표 ${target}명
+            센확 목표 ${ed(key + 'Target')}명
           </div>
         </div>
         <div class="stages-wrap">
@@ -1033,8 +1078,8 @@ function renderFunnelGrid() {
   const container = document.getElementById('funnelGrid');
   container.className = '';
   container.innerHTML =
-    buildCard('이키가이',  '#ec4899', S.ikiTarget, ikiTrack, S.rates.iki, S.ikiDB, S.ikiAdBudget) +
-    buildCard('직무분석지', '#6448e8', S.jikTarget, jikTrack, S.rates.jik, S.jikDB, S.jikAdBudget);
+    buildCard('이키가이',  '#ec4899', S.ikiTarget, ikiTrack, S.rates.iki, S.ikiDB, S.ikiAdBudget, 'iki') +
+    buildCard('직무분석지', '#6448e8', S.jikTarget, jikTrack, S.rates.jik, S.jikDB, S.jikAdBudget, 'jik');
 }
 
 // ================================================================
@@ -1583,10 +1628,144 @@ function handleAiUpload(input) {
 }
 
 // ================================================================
+//  RENDER CURRENT (활성 탭까지 갱신)
+// ================================================================
+function activeTabName() {
+  const p = document.querySelector('.tab-panel.active');
+  return p ? p.id.replace('tab-', '') : 'funnel';
+}
+function renderCurrent() {
+  renderAll();
+  const t = activeTabName();
+  if (t === 'settings') renderRateGrid();
+  if (t === 'monthly')  renderMonthlyTable();
+}
+
+// ================================================================
+//  INLINE EDIT (더블클릭 수정)
+// ================================================================
+const EDIT_LABELS = {
+  ikiTarget: '이키 센확 목표', jikTarget: '직무 센확 목표',
+  ikiDB: '이키 DB 목표',       jikDB: '직무 DB 목표',
+  ikiAdBudget: '이키 광고비',  jikAdBudget: '직무 광고비',
+};
+let _editing = null;
+
+document.addEventListener('dblclick', (e) => {
+  const span = e.target.closest('.editable');
+  if (!span || _editing) return;
+  const field = span.dataset.edit;
+  if (!(field in S)) return;
+  const type = span.dataset.type || 'int';
+
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.className = 'edit-input';
+  input.min = 0;
+  if (type === 'won') input.step = 10000;
+  input.value = S[field];
+
+  const prevHTML = span.innerHTML;
+  span.innerHTML = '';
+  span.appendChild(input);
+  _editing = span;
+  input.focus();
+  input.select();
+
+  const commit = (save) => {
+    if (!_editing) return;
+    _editing = null;
+    if (save) {
+      const v = parseInt(input.value);
+      if (!isNaN(v) && v >= 0) {
+        S[field] = v;
+        persist();
+        renderCurrent();
+        toast(`✅ ${EDIT_LABELS[field] || field} 수정됨`);
+        return;
+      }
+    }
+    span.innerHTML = prevHTML;
+  };
+
+  input.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter')  { ev.preventDefault(); commit(true); }
+    if (ev.key === 'Escape') { ev.preventDefault(); commit(false); }
+  });
+  input.addEventListener('blur', () => commit(true));
+});
+
+// editable span 생성 헬퍼
+function ed(field, type) {
+  const v = S[field];
+  const disp = type === 'won' ? '₩' + fmt(v) : v;
+  return `<span class="editable" data-edit="${field}" data-type="${type || 'int'}" title="더블클릭하여 수정">${disp}</span>`;
+}
+
+// ================================================================
+//  FIREBASE 실시간 공유
+// ================================================================
+let _boardRef = null, _applyingRemote = false;
+
+function boardId() {
+  const m = location.hash.match(/board=([\w-]+)/);
+  return m ? m[1] : 'weit-main';
+}
+function setSyncBadge(on) {
+  const b = document.getElementById('syncBadge');
+  if (!b) return;
+  b.className = 'sync-badge ' + (on ? 'sync-on' : 'sync-off');
+  b.textContent = on ? `● 실시간 공유 · ${boardId()}` : '● 로컬 전용';
+}
+function firebaseReady() {
+  return FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.apiKey && window.firebase;
+}
+function initFirebase() {
+  if (!firebaseReady()) { setSyncBadge(false); return; }
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    _boardRef = firebase.database().ref('boards/' + boardId());
+    _boardRef.on('value', (snap) => {
+      const d = snap.val();
+      if (d && d._ver === STATE_VER) {
+        _applyingRemote = true;
+        Object.assign(S, d);
+        localStorage.setItem('weit_funnel_v2', JSON.stringify(S));
+        renderCurrent();
+        _applyingRemote = false;
+      } else if (!d) {
+        pushRemote(); // 공유 보드가 비어있으면 현재 상태를 업로드
+      }
+    }, (err) => { console.warn('Firebase 구독 실패:', err); setSyncBadge(false); });
+    setSyncBadge(true);
+  } catch (e) {
+    console.warn('Firebase 초기화 실패:', e);
+    setSyncBadge(false);
+  }
+}
+function pushRemote() {
+  if (!_boardRef || _applyingRemote) return;
+  _boardRef.set(S).catch((e) => console.warn('동기화 전송 실패:', e));
+}
+
+// 공유 링크 복사
+function copyShareLink() {
+  const url = location.origin + location.pathname + '#board=' + boardId();
+  navigator.clipboard.writeText(url).then(
+    () => toast('🔗 공유 링크가 복사되었습니다'),
+    () => { prompt('아래 링크를 복사하세요:', url); }
+  );
+}
+
+// 주소의 #board 가 바뀌면 다시 구독
+window.addEventListener('hashchange', () => location.reload());
+
+// ================================================================
 //  INIT
 // ================================================================
 loadState();
 renderAll();
+initFirebase();
 </script>
 </body>
 </html>
