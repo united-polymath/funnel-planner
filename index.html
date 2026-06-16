@@ -522,6 +522,20 @@
     .sg-tag.blue { background: #eff6ff; color: #3b82f6; }
     .sg-tag.orange { background: #fff7ed; color: #f97316; }
 
+    /* --- Stage card flow (가로 카드 + 화살표 단항률) --- */
+    .sg-flow { display: flex; align-items: stretch; gap: 2px; overflow-x: auto; padding: 4px 0 8px; }
+    .sg-flow .step-goal-card { min-width: 120px; }
+    .sg-current.editable { display: inline-block; }
+    .sg-arrow {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-width: 52px; flex-shrink: 0; gap: 3px;
+    }
+    .sg-arrow-ico { color: #cbd0e6; font-size: 16px; font-weight: 800; line-height: 1; }
+    .sg-arrow-rate {
+      font-size: 10px; font-weight: 800; color: var(--accent);
+      background: #eef0f8; border-radius: 8px; padding: 2px 7px; white-space: nowrap;
+    }
+
     /* --- New Funnel UI (Chevron) --- */
     .hc-wrap { display: flex; flex-direction: column; gap: 30px; overflow-x: auto; padding-bottom: 20px; margin-bottom: 22px; }
     .hc-row { display: flex; align-items: flex-start; min-width: 900px; padding-top: 20px;}
@@ -856,7 +870,7 @@ const TRANS_LABELS = [
   { from:'video', to:'final', label:'영 → 센확' },
 ];
 
-const STATE_VER = 4; // bump to reset localStorage on schema change
+const STATE_VER = 5; // bump to reset localStorage on schema change
 
 let S = {
   _ver: STATE_VER,
@@ -879,6 +893,13 @@ let S = {
   rates: {
     iki: [0.38, 0.80, 0.75, 0.667, 1.00],
     jik: [0.25, 0.53, 0.75, 0.667, 0.50],
+  },
+
+  // 현재 실적 (단계별 누적 인원) — 카드의 "현재 / 목표"의 현재값. 더블클릭으로 입력
+  // 순서: [가능DB, 찾기, 합자, 육, 영, 센확]
+  actual: {
+    iki: [0, 0, 0, 0, 0, 0],
+    jik: [0, 0, 0, 0, 0, 0],
   },
 
   monthly: {},
@@ -1009,47 +1030,30 @@ function renderFunnelGrid() {
     const dbCount = track[0];
     const dbPrice = dbGoal > 0 ? Math.round(adBudget / dbGoal) : 0;
 
-    const stageRows = STAGES.map((st, i) => {
-      const count = track[i];
-      const pct   = dbCount > 0 ? (count / dbCount * 100).toFixed(0) : 0;
-      const transRate = i > 0 ? rates[i - 1] : null;
+    const stageFlow = STAGES.map((st, i) => {
+      const target  = track[i];
+      const cur     = (S.actual[key] && S.actual[key][i]) || 0;
+      const pct     = target > 0 ? Math.round(cur / target * 100) : 0;
+      const isFinal = i === 5;
+      const done    = target > 0 && cur >= target;
 
-      const arrowRow = transRate !== null ? `
-        <div class="arrow-row">
-          <div class="arrow-line"></div>
-          <div class="arrow-rate">${fmtPct(transRate)} 전환</div>
-          <div class="arrow-line"></div>
-          <div style="font-size:12px;color:var(--text3);">↓</div>
+      // 이전 단계 → 현재 단계 단항률(전환율)을 화살표에 표기
+      const arrow = i > 0 ? `
+        <div class="sg-arrow">
+          <div class="sg-arrow-ico">➡</div>
+          <div class="sg-arrow-rate">${fmtPct(rates[i - 1])}</div>
         </div>` : '';
 
-      const isFinal = i === 5;
-      const isOk    = isFinal && count >= target;
-
-      return `${arrowRow}
-        <div class="stage-row">
-          <div class="stage-icon" style="background:${st.color}">${st.icon}</div>
-          <div class="stage-info">
-            <div class="stage-name">${st.label}</div>
-            <div class="stage-bar-wrap">
-              <div class="stage-bar-track">
-                <div class="stage-bar-fill" style="width:${pct}%;background:${st.color}"></div>
-              </div>
-            </div>
+      return arrow + `
+        <div class="step-goal-card">
+          <div class="sg-title">${st.icon} ${st.label}</div>
+          <div class="sg-numbers">
+            <span class="sg-current editable" style="color:${st.color}" data-edit="actual:${key}:${i}" title="더블클릭하여 현재 실적 입력">${cur}</span>
+            <span class="sg-target">/ ${target}명</span>
           </div>
-          <div class="stage-nums">
-            <div class="stage-target" style="color:${isFinal ? (isOk?'var(--green)':'var(--red)') : st.color}">
-              ${count}명 ${isFinal ? (isOk?'✅':'⚠️') : ''}
-            </div>
-            <div class="stage-current">${pct}%</div>
-          </div>
+          <div class="sg-bar-bg"><div class="sg-bar-fill" style="width:${Math.min(100, pct)}%;background:${st.color}"></div></div>
+          <div class="sg-pct" style="color:${st.color}">목표 대비 ${pct}%${isFinal && done ? ' ✅' : ''}</div>
         </div>`;
-    }).join('');
-
-    // 추천 트랙 화살표 표시
-    const trackArrow = track.map((n,i) => {
-      const st = STAGES[i];
-      return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:${st.color};background:${st.color}18;padding:3px 8px;border-radius:10px;">${n}명</span>`
-        + (i < track.length-1 ? '<span style="color:var(--text3);font-size:12px;"> ➡️ </span>' : '');
     }).join('');
 
     return `
@@ -1065,12 +1069,7 @@ function renderFunnelGrid() {
           </div>
         </div>
         <div class="stages-wrap">
-          <!-- 추천 트랙 한눈에 -->
-          <div style="background:#f7f8fd;border:1px solid #edf0fb;border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
-            <span style="font-size:10px;font-weight:700;color:var(--text3);margin-right:4px;">추천 트랙</span>
-            ${trackArrow}
-          </div>
-          ${stageRows}
+          <div class="sg-flow">${stageFlow}</div>
         </div>
       </div>`;
   }
@@ -1651,11 +1650,29 @@ const EDIT_LABELS = {
 };
 let _editing = null;
 
+// 필드 경로 읽기/쓰기 (예: "ikiTarget" 또는 "actual:iki:2")
+function readField(p) {
+  if (p.startsWith('actual:')) { const [, k, i] = p.split(':'); return S.actual[k][+i]; }
+  return S[p];
+}
+function writeField(p, v) {
+  if (p.startsWith('actual:')) { const [, k, i] = p.split(':'); S.actual[k][+i] = v; return; }
+  S[p] = v;
+}
+function isField(p) { return p.startsWith('actual:') || (p in S); }
+function fieldLabel(p) {
+  if (p.startsWith('actual:')) {
+    const [, k, i] = p.split(':');
+    return `${k === 'iki' ? '이키' : '직무'} ${STAGES[+i].label} 실적`;
+  }
+  return EDIT_LABELS[p] || p;
+}
+
 document.addEventListener('dblclick', (e) => {
   const span = e.target.closest('.editable');
   if (!span || _editing) return;
   const field = span.dataset.edit;
-  if (!(field in S)) return;
+  if (!isField(field)) return;
   const type = span.dataset.type || 'int';
 
   const input = document.createElement('input');
@@ -1663,7 +1680,7 @@ document.addEventListener('dblclick', (e) => {
   input.className = 'edit-input';
   input.min = 0;
   if (type === 'won') input.step = 10000;
-  input.value = S[field];
+  input.value = readField(field);
 
   const prevHTML = span.innerHTML;
   span.innerHTML = '';
@@ -1678,10 +1695,10 @@ document.addEventListener('dblclick', (e) => {
     if (save) {
       const v = parseInt(input.value);
       if (!isNaN(v) && v >= 0) {
-        S[field] = v;
+        writeField(field, v);
         persist();
         renderCurrent();
-        toast(`✅ ${EDIT_LABELS[field] || field} 수정됨`);
+        toast(`✅ ${fieldLabel(field)} 수정됨`);
         return;
       }
     }
