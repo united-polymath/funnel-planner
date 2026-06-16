@@ -706,7 +706,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">직무분석지 센확 목표 (명)</label>
-            <input class="form-input" id="set-jik-target" type="number" min="1" max="20" value="3">
+            <input class="form-input" id="set-jik-target" type="number" min="1" max="20" value="2">
             <div class="form-hint">직무분석지 커리큘럼 최종 확정 인원</div>
           </div>
           <div class="form-group">
@@ -734,12 +734,12 @@
         <div class="card-body">
           <div class="form-group">
             <label class="form-label">이키가이 DB 목표 (명)</label>
-            <input class="form-input" id="set-iki-db" type="number" min="1" value="50">
-            <div class="form-hint">이키가이 광고로 확보할 DB 수 (기본 50명)</div>
+            <input class="form-input" id="set-iki-db" type="number" min="1" value="13">
+            <div class="form-hint">이키가이 광고로 확보할 DB 수 (기본 13명)</div>
           </div>
           <div class="form-group">
             <label class="form-label">이키가이 광고비 (원)</label>
-            <input class="form-input" id="set-iki-budget" type="number" min="0" step="10000" value="500000">
+            <input class="form-input" id="set-iki-budget" type="number" min="0" step="10000" value="400000">
             <div class="form-hint">이키가이 광고 집행 총액</div>
           </div>
         </div>
@@ -753,12 +753,12 @@
         <div class="card-body">
           <div class="form-group">
             <label class="form-label">직무분석지 DB 목표 (명)</label>
-            <input class="form-input" id="set-jik-db" type="number" min="1" value="75">
-            <div class="form-hint">직무분석지 광고로 확보할 DB 수 (기본 75명)</div>
+            <input class="form-input" id="set-jik-db" type="number" min="1" value="60">
+            <div class="form-hint">직무분석지 광고로 확보할 DB 수 (기본 60명)</div>
           </div>
           <div class="form-group">
             <label class="form-label">직무분석지 광고비 (원)</label>
-            <input class="form-input" id="set-jik-budget" type="number" min="0" step="10000" value="500000">
+            <input class="form-input" id="set-jik-budget" type="number" min="0" step="10000" value="600000">
             <div class="form-hint">직무분석지 광고 집행 총액</div>
           </div>
         </div>
@@ -812,28 +812,29 @@ const TRANS_LABELS = [
   { from:'video', to:'final', label:'영 → 센확' },
 ];
 
-const STATE_VER = 3; // bump to reset localStorage on schema change
+const STATE_VER = 4; // bump to reset localStorage on schema change
 
 let S = {
   _ver: STATE_VER,
   ikiTarget: 2,
-  jikTarget: 3,
+  jikTarget: 2,
   month: '2026-07',
   // 캠페인 집행 기간 (일일 예산 계산용)
   campStart: '2026-07-01',
   campEnd: '2026-07-31',
-  dbPrice: 10500,
-  // 이키가이 DB 목표: 50명 / 직무분석지 DB 목표: 75명
-  ikiDB: 50,
-  jikDB: 75,
-  ikiAdBudget: 500000,
-  jikAdBudget: 500000,
+  dbPrice: 10000,
+  // 이키가이 DB 목표: 13명(40만) / 직무분석지 DB 목표: 60명(60만)
+  ikiDB: 13,
+  jikDB: 60,
+  ikiAdBudget: 400000,
+  jikAdBudget: 600000,
 
   // 전환율: [DB→찾기, 찾기→합자, 합자→육, 육→영, 영→센확]
-  // 출처: 위잇 실측 데이터 기반 목표 트랙
+  // 출처: 2026 목표 퍼널 (이키 13→5→4→3→2→2 / 직무 60→15→8→6→4→2)
+  // 육→영은 2/3·4/6 = 66.7% 이므로 0.667로 저장(표시 67%)
   rates: {
-    iki: [0.20, 0.60, 0.60, 0.80, 0.70],
-    jik: [0.20, 0.60, 0.60, 0.80, 0.70],
+    iki: [0.38, 0.80, 0.75, 0.667, 1.00],
+    jik: [0.25, 0.53, 0.75, 0.667, 0.50],
   },
 
   monthly: {},
@@ -901,8 +902,8 @@ function calcTargetTrack(target, rates) {
 //  RENDER KPI
 // ================================================================
 function renderKPI() {
-  const ikiTrack = calcForward(S.ikiDB, S.rates.iki); // [50,10,6,4,3,2]
-  const jikTrack = calcForward(S.jikDB, S.rates.jik); // [75,15,9,6,4,3]
+  const ikiTrack = calcForward(S.ikiDB, S.rates.iki); // [13,5,4,3,2,2]
+  const jikTrack = calcForward(S.jikDB, S.rates.jik); // [60,15,8,6,4,2]
   const totalFinal = S.ikiTarget + S.jikTarget;
   const totalDB = S.ikiDB + S.jikDB;
   const totalBudget = S.ikiAdBudget + S.jikAdBudget;
@@ -956,8 +957,8 @@ function renderStepGoals() {
 //  RENDER FUNNEL CARDS
 // ================================================================
 function renderFunnelGrid() {
-  const ikiTrack = calcForward(S.ikiDB, S.rates.iki); // [50,10,6,4,3,2]
-  const jikTrack = calcForward(S.jikDB, S.rates.jik); // [75,15,9,6,4,3]
+  const ikiTrack = calcForward(S.ikiDB, S.rates.iki); // [13,5,4,3,2,2]
+  const jikTrack = calcForward(S.jikDB, S.rates.jik); // [60,15,8,6,4,2]
 
   function buildCard(label, color, target, track, rates, dbGoal, adBudget) {
     const dbCount = track[0];
@@ -1462,14 +1463,14 @@ function renderRateGrid() {
 // ================================================================
 function saveSettings() {
   S.ikiTarget    = parseInt(document.getElementById('set-iki-target').value) || 2;
-  S.jikTarget    = parseInt(document.getElementById('set-jik-target').value) || 3;
+  S.jikTarget    = parseInt(document.getElementById('set-jik-target').value) || 2;
   S.month        = document.getElementById('set-month').value || '2026-07';
   S.campStart    = document.getElementById('set-camp-start').value || '2026-07-01';
   S.campEnd      = document.getElementById('set-camp-end').value || '2026-07-31';
-  S.ikiDB        = parseInt(document.getElementById('set-iki-db').value) || 50;
-  S.jikDB        = parseInt(document.getElementById('set-jik-db').value) || 75;
-  S.ikiAdBudget  = parseInt(document.getElementById('set-iki-budget').value) || 500000;
-  S.jikAdBudget  = parseInt(document.getElementById('set-jik-budget').value) || 500000;
+  S.ikiDB        = parseInt(document.getElementById('set-iki-db').value) || 13;
+  S.jikDB        = parseInt(document.getElementById('set-jik-db').value) || 60;
+  S.ikiAdBudget  = parseInt(document.getElementById('set-iki-budget').value) || 400000;
+  S.jikAdBudget  = parseInt(document.getElementById('set-jik-budget').value) || 600000;
 
   TRANS_LABELS.forEach((_, i) => {
     const iki = parseFloat(document.getElementById(`rate-iki-${i}`).value);
