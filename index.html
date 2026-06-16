@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>위잇 단계 목표 관리 | Funnel Planner</title>
+  <meta name="description" content="위잇 개강별 단계 목표 세팅 및 DB/광고비 진단 대시보드">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #f4f5fb;
+      --card: #ffffff;
+      --border: #e4e6f0;
+      --border2: #d0d3e8;
+      --text1: #1a1a2e;
+      --text2: #5a5f7d;
+      --text3: #9599b3;
+      --accent: #6448e8;
+      --accent-l: #7c5cfc;
+      --accent-dim: rgba(100,72,232,0.08);
+      --accent-glow: rgba(100,72,232,0.20);
+      --cyan: #0891b2;
+      --green: #16a34a;
+      --green-bg: rgba(22,163,74,0.09);
+      --yellow: #d97706;
+      --yellow-bg: rgba(217,119,6,0.09);
+      --red: #dc2626;
+      --red-bg: rgba(220,38,38,0.09);
+      --orange: #ea580c;
+
+      /* Stage colors */
+      --s-ad: #6448e8;
+      --s-db: #0891b2;
+      --s-chat: #f59e0b;
+      --s-meet: #22c55e;
+      --s-train: #06b6d4;
+      --s-video: #8b5cf6;
+      --s-final: #ec4899;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      --shadow-sm: 0 1px 4px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 14px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --shadow-lg: 0 12px 36px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text1);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 0% 0%, rgba(100,72,232,0.06) 0%, transparent 55%),
+        radial-gradient(ellipse 55% 40% at 100% 100%, rgba(8,145,178,0.05) 0%, transparent 50%);
+      pointer-events: none; z-index: 0;
+    }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #eef0f8; }
+    ::-webkit-scrollbar-thumb { background: #c5c8e0; border-radius: 3px; }
+
+    /* ===== HEADER ===== */
+    header {
+      position: sticky; top: 0; z-index: 200;
+      background: rgba(255,255,255,0.93);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-inner {
+      max-width: 1500px; margin: 0 auto;
+      padding: 0 24px; height: 58px;
+      display: flex; align-items: center; gap: 14px;
+    }
+
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--accent), var(--s-final));
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+    }
+    .logo-text {
+      font-size: 16px; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--s-final));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .logo-sub { font-size: 12px; color: var(--text3); margin-left: 2px; }
+
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 16px; border-radius: var(--radius-sm);
+      border: none; cursor: pointer;
+      font-family: inherit; font-size: 12px; font-weight: 600;
+      transition: all 0.18s; white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #5b3fe8);
+      color: white; box-shadow: 0 2px 12px var(--accent-glow);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px var(--accent-glow); }
+    .btn-ghost {
+      background: transparent; color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: #f0f1f8; color: var(--text1); border-color: var(--border2); }
+
+    /* ===== LAYOUT ===== */
+    .container {
+      max-width: 1500px; margin: 0 auto;
+      padding: 24px; position: relative; z-index: 1;
+    }
+
+    /* ===== PAGE TITLE ===== */
+    .page-title-block {
+      margin-bottom: 22px;
+    }
+    .page-title {
+      font-size: 24px; font-weight: 900; color: var(--text1);
+      letter-spacing: -0.5px; margin-bottom: 6px;
+    }
+    .page-title span {
+      background: linear-gradient(135deg, var(--accent), var(--s-final));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-subtitle { font-size: 13px; color: var(--text2); }
+
+    /* ===== TABS ===== */
+    .tab-bar {
+      display: flex; gap: 2px;
+      background: #eff0f8;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 3px; margin-bottom: 22px;
+      width: fit-content;
+    }
+    .tab-btn {
+      padding: 7px 18px; border-radius: 7px;
+      border: none; background: transparent;
+      color: var(--text2); font-family: inherit;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.18s;
+    }
+    .tab-btn.active {
+      background: var(--accent); color: white;
+      box-shadow: 0 1px 6px var(--accent-glow);
+    }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-title { font-size: 14px; font-weight: 700; }
+    .card-badge {
+      padding: 2px 10px; border-radius: 20px;
+      font-size: 10px; font-weight: 700;
+      background: var(--accent-dim); color: var(--accent-l);
+    }
+    .card-body { padding: 20px; }
+
+    /* ===== SECTION HEADER ===== */
+    .sec-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 14px;
+    }
+    .sec-title { font-size: 13px; font-weight: 700; }
+    .sec-line { flex: 1; height: 1px; background: var(--border); }
+
+    /* ===== KPI ROW ===== */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px; margin-bottom: 22px;
+    }
+
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      position: relative; overflow: hidden;
+      transition: all 0.25s;
+      box-shadow: var(--shadow-sm);
+    }
+    .kpi-card::after {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      opacity: 0; transition: opacity 0.25s;
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .kpi-card:hover::after { opacity: 1; }
+    .kpi-card.c-accent::after { background: linear-gradient(90deg, var(--accent), var(--accent-l)); }
+    .kpi-card.c-green::after { background: linear-gradient(90deg, var(--green), #4ade80); }
+    .kpi-card.c-yellow::after { background: linear-gradient(90deg, var(--yellow), #fbbf24); }
+    .kpi-card.c-red::after { background: linear-gradient(90deg, var(--red), #f87171); }
+    .kpi-card.c-cyan::after { background: linear-gradient(90deg, var(--cyan), #22d3ee); }
+    .kpi-card.c-pink::after { background: linear-gradient(90deg, var(--s-final), #f472b6); }
+
+    .kpi-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px; }
+    .kpi-value { font-size: 22px; font-weight: 800; line-height: 1.1; margin-bottom: 4px; }
+    .kpi-sub { font-size: 11px; color: var(--text2); }
+
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 20px;
+      font-size: 10px; font-weight: 700;
+    }
+    .badge-g { background: var(--green-bg); color: var(--green); }
+    .badge-y { background: var(--yellow-bg); color: var(--yellow); }
+    .badge-r { background: var(--red-bg); color: var(--red); }
+    .badge-p { background: var(--accent-dim); color: var(--accent-l); }
+
+    /* ===== FUNNEL GRID ===== */
+    .funnel-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .funnel-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .funnel-card-header {
+      padding: 14px 18px;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .funnel-color-bar {
+      width: 4px; height: 24px; border-radius: 3px; flex-shrink: 0;
+    }
+
+    .funnel-card-name { font-size: 14px; font-weight: 700; }
+    .funnel-card-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
+    .funnel-target-badge {
+      margin-left: auto; padding: 4px 12px;
+      border-radius: 20px; font-size: 11px; font-weight: 700;
+    }
+
+    /* ===== STAGE STEPS ===== */
+    .stages-wrap { padding: 16px 18px; }
+
+    .stage-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .stage-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; flex-shrink: 0; font-weight: 700;
+      color: white;
+    }
+
+    .stage-info { flex: 1; }
+    .stage-name { font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 3px; }
+
+    .stage-bar-wrap {
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .stage-bar-track {
+      flex: 1; height: 8px; background: #eef0f8;
+      border-radius: 4px; overflow: hidden;
+    }
+    .stage-bar-fill {
+      height: 100%; border-radius: 4px;
+      transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .stage-nums {
+      text-align: right; flex-shrink: 0;
+      min-width: 90px;
+    }
+    .stage-target { font-size: 13px; font-weight: 800; }
+    .stage-current { font-size: 10px; color: var(--text3); }
+
+    .stage-rate-badge {
+      font-size: 9px; font-weight: 700;
+      padding: 2px 6px; border-radius: 10px;
+      background: #eef0f8; color: var(--text2);
+      flex-shrink: 0;
+    }
+
+    .arrow-row {
+      display: flex; align-items: center;
+      gap: 6px; margin: -2px 0 8px 20px;
+    }
+    .arrow-line { flex: 1; height: 1px; background: var(--border); }
+    .arrow-rate {
+      font-size: 10px; color: var(--text3); font-weight: 600;
+      background: #f7f8fd; padding: 1px 6px;
+      border-radius: 8px; border: 1px solid var(--border);
+    }
+
+    /* ===== SETTINGS PANEL ===== */
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px; margin-bottom: 22px;
+    }
+
+    .form-group { margin-bottom: 12px; }
+    .form-label {
+      display: block; font-size: 10px; font-weight: 700;
+      color: var(--text2); text-transform: uppercase;
+      letter-spacing: 0.6px; margin-bottom: 5px;
+    }
+    .form-input {
+      width: 100%; background: #f7f8fd;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text1); font-family: inherit;
+      font-size: 14px; padding: 9px 12px;
+      outline: none; transition: all 0.18s;
+    }
+    .form-input:focus {
+      border-color: var(--accent); background: white;
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .form-hint { font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+    /* ===== DB DIAGNOSIS ===== */
+    .diagnosis-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      margin-bottom: 22px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .diagnosis-header {
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(100,72,232,0.05), rgba(236,72,153,0.04));
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .diagnosis-body { padding: 20px; }
+
+    .diag-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px; margin-bottom: 16px;
+    }
+
+    .diag-item {
+      background: #f7f8fd;
+      border: 1px solid #edf0fb;
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+    .diag-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .diag-value { font-size: 18px; font-weight: 800; }
+    .diag-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+    /* Alert */
+    .alert {
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      display: flex; align-items: flex-start; gap: 12px;
+      margin-bottom: 12px;
+    }
+    .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .alert-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .alert-body { font-size: 12px; line-height: 1.6; }
+    .alert-warn { background: rgba(217,119,6,0.08); border: 1px solid rgba(217,119,6,0.25); }
+    .alert-ok { background: var(--green-bg); border: 1px solid rgba(22,163,74,0.25); color: var(--green); }
+    .alert-info { background: var(--accent-dim); border: 1px solid rgba(100,72,232,0.20); color: var(--accent); }
+
+    /* ===== MONTHLY PLAN TABLE ===== */
+    .monthly-wrap { margin-bottom: 22px; }
+
+    .month-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 12px;
+    }
+    .month-table th {
+      background: #f7f8fd;
+      padding: 9px 12px; text-align: center;
+      font-weight: 700; color: var(--text2);
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+    }
+    .month-table td {
+      padding: 9px 12px; text-align: center;
+      border-bottom: 1px solid #edf0fb;
+      vertical-align: middle;
+    }
+    .month-table tbody tr:hover td { background: #fafbff; }
+    .month-table td:first-child { text-align: left; font-weight: 700; }
+
+    .stage-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 12px;
+      font-size: 11px; font-weight: 700;
+    }
+
+    .month-table .actual-input {
+      background: transparent; border: none;
+      color: var(--accent); font-size: 12px; font-weight: 700;
+      font-family: inherit; outline: none;
+      width: 48px; text-align: center;
+      cursor: pointer;
+      border-bottom: 1px dashed var(--border2);
+    }
+    .month-table .actual-input:focus {
+      border-bottom-color: var(--accent);
+    }
+
+    /* ===== TOAST ===== */
+    #toastBox {
+      position: fixed; bottom: 20px; right: 20px;
+      z-index: 9999; display: flex; flex-direction: column; gap: 7px;
+    }
+    .toast {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 11px 15px; font-size: 12px; font-weight: 500;
+      color: var(--text1); box-shadow: var(--shadow-lg);
+      display: flex; align-items: center; gap: 8px;
+      animation: toastIn 0.28s ease;
+    }
+    @keyframes toastIn { from { transform: translateX(80px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes toastOut { to { transform: translateX(80px); opacity: 0; } }
+    .toast.out { animation: toastOut 0.28s ease forwards; }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fadein { animation: fadeUp 0.35s ease forwards; }
+
+    /* Progress ring */
+    .ring-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    .ring-label { position: absolute; font-size: 11px; font-weight: 800; }
+
+    /* ===== TAB PANELS ===== */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    @media (max-width: 900px) {
+      .funnel-grid { grid-template-columns: 1fr; }
+      .settings-grid { grid-template-columns: 1fr 1fr; }
+      .diag-grid { grid-template-columns: 1fr 1fr; }
+      .kpi-row { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .container { padding: 14px; }
+      .settings-grid { grid-template-columns: 1fr; }
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ===== STEP GOALS (NEW) ===== */
+    .step-goal-header { margin-bottom: 12px; }
+    .step-goal-title { font-size: 16px; font-weight: 800; color: var(--text1); margin-bottom: 4px; }
+    .step-goal-sub { font-size: 12px; color: var(--text3); }
+    .step-goal-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; }
+    .step-goal-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 12px;
+      min-width: 110px;
+      flex: 1;
+      text-align: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .sg-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 12px; }
+    .sg-numbers { margin-bottom: 12px; }
+    .sg-current { font-size: 32px; font-weight: 800; color: #3b82f6; line-height: 1; }
+    .sg-target { font-size: 14px; color: var(--text3); font-weight: 600; margin-left: 2px; }
+    .sg-bar-bg {
+      height: 4px; background: #f0f1f8; border-radius: 2px; overflow: hidden; margin-bottom: 8px;
+      width: 80%; margin-left: auto; margin-right: auto;
+    }
+    .sg-bar-fill { height: 100%; background: #3b82f6; width: 0%; }
+    .sg-pct { font-size: 11px; font-weight: 700; color: #3b82f6; margin-bottom: 10px; }
+    .sg-tags { display: flex; justify-content: center; gap: 6px; }
+    .sg-tag { font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; }
+    .sg-tag.blue { background: #eff6ff; color: #3b82f6; }
+    .sg-tag.orange { background: #fff7ed; color: #f97316; }
+
+    /* --- New Funnel UI (Chevron) --- */
+    .hc-wrap { display: flex; flex-direction: column; gap: 30px; overflow-x: auto; padding-bottom: 20px; margin-bottom: 22px; }
+    .hc-row { display: flex; align-items: flex-start; min-width: 900px; padding-top: 20px;}
+    .hc-budget { width: 110px; background: #ef4444; color: white; border-radius: 4px; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0; margin-right: 15px; position: relative; }
+    .hc-budget-val { padding: 10px; font-size: 16px; font-weight: 800; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); }
+    .hc-budget-lbl { padding: 6px 10px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+    .hc-step { display: flex; flex-direction: column; width: 115px; position: relative; margin-right: 8px; flex-shrink: 0; }
+    .hc-top-tip { position: absolute; top: -18px; left: 0; width: 100%; text-align: center; font-size: 9px; font-weight: 800; color: #ef4444; white-space: nowrap; }
+    .hc-chevron { height: 34px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; font-weight: 800; clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%); position: relative; z-index: 2; padding-right: 12px; }
+    .hc-chevron.c-orange { background: #f97316; }
+    .hc-chevron.c-yellow { background: #fbbf24; }
+    .hc-chevron.c-green { background: #22c55e; }
+    .hc-chevron.c-blue { background: #3b82f6; }
+    .hc-chevron.c-purple { background: #8b5cf6; }
+    .hc-chevron.c-red { background: #ef4444; }
+    .hc-box { background: white; border: 1px solid #d1d5db; border-top: none; width: calc(100% - 12px); padding: 6px 5px; font-size: 11px; font-weight: 600; color: #374151; text-align: center; }
+    .hc-rates-bar { display: flex; margin-left: 182px; margin-top: -8px; }
+    .hc-rate-item { width: 123px; display: flex; justify-content: center; position: relative; }
+    .hc-rate-item::before { content: ''; position: absolute; top: 9px; left: 0; width: 100%; height: 6px; background: #e5e7eb; z-index: 0; }
+    .hc-rate-val { background: #e5e7eb; padding: 2px 10px; font-size: 11px; font-weight: 800; color: #4b5563; z-index: 1; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🎯</div>
+      <span class="logo-text">위잇 목표 관리</span>
+      <span class="logo-sub">Funnel Planner</span>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-ghost" onclick="exportJSON()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        내보내기
+      </button>
+      <button class="btn btn-primary" onclick="openAIDiagModal()" style="background: linear-gradient(135deg, #10b981, #059669);">
+        📸 AI 진단받기
+      </button>
+      <button class="btn btn-primary" onclick="recalc()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        목표 재계산
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- AI Diagnosis Modal -->
+<div id="aiDiagModal" class="overlay">
+  <div class="modal">
+    <div class="modal-title">📸 AI 광고 진단</div>
+    <div style="font-size:12px; color:var(--text2); margin-bottom: 20px;">
+      오늘자 광고 관리자 캡처 이미지를 올려주시면, 현재 전환율과 비교하여 예산 및 CPL 개선 조언을 알려드립니다. (API 키 연동 필요)
+    </div>
+    
+    <div style="border: 2px dashed var(--border); border-radius: 10px; padding: 30px; text-align: center; cursor: pointer; margin-bottom: 20px; background: #f7f8fd;" onclick="document.getElementById('aiImgInput').click()">
+      <div style="font-size: 24px; margin-bottom: 10px;">📤</div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--accent);">이미지 업로드 (클릭)</div>
+      <div style="font-size: 11px; color: var(--text3); margin-top: 4px;">PNG, JPG 파일</div>
+      <input type="file" id="aiImgInput" style="display:none;" accept="image/*" onchange="handleAiUpload(this)">
+    </div>
+
+    <div id="aiDiagResult" style="display:none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px; font-size: 12px; line-height: 1.5; color: #1e3a8a;"></div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAIDiagModal()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Page title -->
+  <div class="page-title-block fadein">
+    <div class="page-title">위잇 <span>단계별 목표</span> 관리 플래너</div>
+    <div class="page-subtitle">개강(월)별 센확 목표를 설정하고 각 단계에서 필요한 인원을 역산합니다 · DB 단가 기반 광고비 진단 포함</div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('funnel')">📊 퍼널 목표</button>
+    <button class="tab-btn" onclick="switchTab('daily')">💰 일일 예산</button>
+    <button class="tab-btn" onclick="switchTab('monthly')">📅 월별 계획</button>
+    <button class="tab-btn" onclick="switchTab('settings')">⚙️ 설정</button>
+  </div>
+
+  <!-- ==============================
+       TAB: FUNNEL
+  ============================== -->
+  <div id="tab-funnel" class="tab-panel active">
+
+    <!-- Step Goals (New) -->
+    <div id="stepGoalSection" style="margin-bottom: 22px;"></div>
+
+    <!-- KPI Row -->
+    <div class="kpi-row" id="kpiRow"></div>
+
+    <!-- Funnel Cards -->
+    <div class="funnel-grid" id="funnelGrid"></div>
+
+    <!-- DB Diagnosis -->
+    <div class="diagnosis-card fadein">
+      <div class="diagnosis-header">
+        <div style="font-size:20px;">🔍</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;">DB / 광고비 진단</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:1px;">현재 DB 수 대비 목표 달성 가능 여부 · 추가 필요 DB 및 예산 계산</div>
+        </div>
+      </div>
+      <div class="diagnosis-body">
+        <div class="diag-grid" id="diagGrid"></div>
+        <div id="alertBox"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==============================
+       TAB: DAILY BUDGET
+  ============================== -->
+  <div id="tab-daily" class="tab-panel">
+
+    <!-- 기간 요약 바 -->
+    <div class="card fadein" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div class="card-title">💰 일일 광고비 / 일일 목표</div>
+        <div class="card-badge" id="dailyPeriodBadge">기간 –</div>
+        <div style="margin-left:auto;font-size:11px;color:var(--text2);">설정 탭에서 시작일·마감일을 바꾸면 자동 재계산됩니다</div>
+      </div>
+      <div class="card-body">
+        <div class="kpi-row" id="dailyKpiRow" style="margin-bottom:0;"></div>
+      </div>
+    </div>
+
+    <!-- 오늘 기준 페이스 -->
+    <div id="dailyPaceBox" style="margin-bottom:16px;"></div>
+
+    <!-- 캠페인별 일일 예산 -->
+    <div class="funnel-grid" id="dailyBudgetGrid" style="margin-bottom:16px;"></div>
+
+    <!-- 단계별 일일 목표 -->
+    <div class="card fadein">
+      <div class="card-header">
+        <div class="card-title">📋 단계별 일일 목표 (직무 + 이키 합산)</div>
+        <div style="margin-left:auto;font-size:11px;color:var(--text2);">전체 목표 ÷ 집행 일수</div>
+      </div>
+      <div class="card-body" style="overflow-x:auto;">
+        <table class="month-table" id="dailyStageTable"></table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==============================
+       TAB: MONTHLY
+  ============================== -->
+  <div id="tab-monthly" class="tab-panel">
+    <div class="card fadein" style="margin-bottom:22px;">
+      <div class="card-header">
+        <div class="card-title">📅 월별 퍼널 실적 입력</div>
+        <div class="card-badge">직무 + 이키 합산</div>
+        <div style="margin-left:auto;font-size:11px;color:var(--text2);">실제 인원을 입력하면 전환율이 자동 계산됩니다</div>
+      </div>
+      <div class="card-body" style="overflow-x:auto;">
+        <table class="month-table" id="monthTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================
+       TAB: SETTINGS
+  ============================== -->
+  <div id="tab-settings" class="tab-panel">
+    <div class="fadein" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:22px;">
+
+      <!-- 목표 설정 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🎯 센확 목표 설정</div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">이키가이 센확 목표 (명)</label>
+            <input class="form-input" id="set-iki-target" type="number" min="1" max="20" value="2">
+            <div class="form-hint">이키가이 커리큘럼 최종 확정 인원</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">직무분석지 센확 목표 (명)</label>
+            <input class="form-input" id="set-jik-target" type="number" min="1" max="20" value="3">
+            <div class="form-hint">직무분석지 커리큘럼 최종 확정 인원</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">현재 모집 월</label>
+            <input class="form-input" id="set-month" type="month" value="2026-07">
+          </div>
+          <div class="form-group">
+            <label class="form-label">캠페인 시작일</label>
+            <input class="form-input" id="set-camp-start" type="date" value="2026-07-01">
+            <div class="form-hint">광고 집행 시작일</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">캠페인 마감일</label>
+            <input class="form-input" id="set-camp-end" type="date" value="2026-07-31">
+            <div class="form-hint">일일 예산 = 총 광고비 ÷ 집행 일수</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 이키가이 DB/광고비 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" style="color:#ec4899">🩷 이키가이 DB / 광고비</div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">이키가이 DB 목표 (명)</label>
+            <input class="form-input" id="set-iki-db" type="number" min="1" value="50">
+            <div class="form-hint">이키가이 광고로 확보할 DB 수 (기본 50명)</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">이키가이 광고비 (원)</label>
+            <input class="form-input" id="set-iki-budget" type="number" min="0" step="10000" value="500000">
+            <div class="form-hint">이키가이 광고 집행 총액</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 직무분석지 DB/광고비 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" style="color:#6448e8">💜 직무분석지 DB / 광고비</div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">직무분석지 DB 목표 (명)</label>
+            <input class="form-input" id="set-jik-db" type="number" min="1" value="75">
+            <div class="form-hint">직무분석지 광고로 확보할 DB 수 (기본 75명)</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">직무분석지 광고비 (원)</label>
+            <input class="form-input" id="set-jik-budget" type="number" min="0" step="10000" value="500000">
+            <div class="form-hint">직무분석지 광고 집행 총액</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 전환율 설정 -->
+    <div class="card fadein">
+      <div class="card-header">
+        <div class="card-title">📈 단계별 전환율 설정</div>
+        <div class="card-badge">기준 데이터 기반</div>
+        <div style="margin-left:auto;font-size:11px;color:var(--text2);">전환율 변경 시 목표 인원이 자동 재계산됩니다</div>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;" id="rateGrid"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-primary" onclick="saveSettings()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        설정 저장 및 적용
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div id="toastBox"></div>
+
+<script>
+// ================================================================
+//  STATE
+// ================================================================
+const STAGES = [
+  { key:'db',    label:'가능 DB',       icon:'📋', color:'#0891b2' },
+  { key:'chat',  label:'찾기 (인터뷰)',  icon:'💬', color:'#f59e0b' },
+  { key:'meet',  label:'합자 (내면상담)', icon:'🤝', color:'#22c55e' },
+  { key:'train', label:'육 (육따기)',    icon:'🏋️', color:'#06b6d4' },
+  { key:'video', label:'영 (영상담)',    icon:'🎥', color:'#8b5cf6' },
+  { key:'final', label:'센확 (오티확답)', icon:'🏆', color:'#ec4899' },
+];
+
+// Transition labels
+const TRANS_LABELS = [
+  { from:'db',    to:'chat',  label:'DB → 찾기' },
+  { from:'chat',  to:'meet',  label:'찾기 → 합자' },
+  { from:'meet',  to:'train', label:'합자 → 육' },
+  { from:'train', to:'video', label:'육 → 영' },
+  { from:'video', to:'final', label:'영 → 센확' },
+];
+
+const STATE_VER = 3; // bump to reset localStorage on schema change
+
+let S = {
+  _ver: STATE_VER,
+  ikiTarget: 2,
+  jikTarget: 3,
+  month: '2026-07',
+  // 캠페인 집행 기간 (일일 예산 계산용)
+  campStart: '2026-07-01',
+  campEnd: '2026-07-31',
+  dbPrice: 10500,
+  // 이키가이 DB 목표: 50명 / 직무분석지 DB 목표: 75명
+  ikiDB: 50,
+  jikDB: 75,
+  ikiAdBudget: 500000,
+  jikAdBudget: 500000,
+
+  // 전환율: [DB→찾기, 찾기→합자, 합자→육, 육→영, 영→센확]
+  // 출처: 위잇 실측 데이터 기반 목표 트랙
+  rates: {
+    iki: [0.20, 0.60, 0.60, 0.80, 0.70],
+    jik: [0.20, 0.60, 0.60, 0.80, 0.70],
+  },
+
+  monthly: {},
+};
+
+// ================================================================
+//  LOAD / SAVE
+// ================================================================
+function persist() {
+  localStorage.setItem('weit_funnel_v2', JSON.stringify(S));
+}
+
+function loadState() {
+  const raw = localStorage.getItem('weit_funnel_v2');
+  if (!raw) return;
+  try {
+    const d = JSON.parse(raw);
+    if (d._ver === STATE_VER) Object.assign(S, d);
+  } catch {}
+}
+
+// ================================================================
+//  UTILS
+// ================================================================
+const fmt = n => n == null ? '—' : Math.round(n).toLocaleString('ko-KR');
+const fmtPct = r => (r * 100).toFixed(1) + '%';
+const fmtMon = m => {
+  if (!m) return '';
+  const [y, mo] = m.split('-');
+  return `${y}년 ${parseInt(mo)}월`;
+};
+
+/**
+ * 순방향 계산: DB 수에서 출발해 각 단계 인원 산출
+ * rates: [DB→찾기, 찾기→합자, 합자→육, 육→영, 영→센확]
+ * 반환: [db, 찾기, 합자, 육, 영, 센확]
+ *
+ * 반올림 전략 (실사용 추천 트랙과 일치):
+ *   DB→찾기: Math.round
+ *   찾기→합자: Math.round
+ *   합자→육:  Math.ceil  (안전 마진 확보)
+ *   육→영:   Math.floor
+ *   영→센확: Math.round
+ */
+function calcForward(dbCount, rates) {
+  const c = [dbCount];
+  c[1] = Math.round(c[0] * rates[0]);
+  c[2] = Math.round(c[1] * rates[1]);
+  c[3] = Math.ceil(c[2]  * rates[2]);
+  c[4] = Math.floor(c[3] * rates[3]);
+  c[5] = Math.round(c[4] * rates[4]);
+  return c; // [db, 찾기, 합자, 육, 영, 센확]
+}
+
+function calcTargetTrack(target, rates) {
+  if (target <= 0) return calcForward(0, rates);
+  for (let db = 1; db <= 10000; db++) {
+    const track = calcForward(db, rates);
+    if (track[5] >= target) return track;
+  }
+  return calcForward(0, rates);
+}
+
+// ================================================================
+//  RENDER KPI
+// ================================================================
+function renderKPI() {
+  const ikiTrack = calcForward(S.ikiDB, S.rates.iki); // [50,10,6,4,3,2]
+  const jikTrack = calcForward(S.jikDB, S.rates.jik); // [75,15,9,6,4,3]
+  const totalFinal = S.ikiTarget + S.jikTarget;
+  const totalDB = S.ikiDB + S.jikDB;
+  const totalBudget = S.ikiAdBudget + S.jikAdBudget;
+  const expectedIki = ikiTrack[5];
+  const expectedJik = jikTrack[5];
+  const expectedTotal = expectedIki + expectedJik;
+  const goalOk = expectedTotal >= totalFinal;
+
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi-card c-pink">
+      <div class="kpi-label">센확 목표 (총)</div>
+      <div class="kpi-value" style="color:var(--s-final)">${totalFinal}명</div>
+      <div class="kpi-sub">이키 ${S.ikiTarget}명 + 직무 ${S.jikTarget}명</div>
+    </div>
+    <div class="kpi-card c-cyan">
+      <div class="kpi-label">DB 목표 (총)</div>
+      <div class="kpi-value" style="color:var(--cyan)">${totalDB}명</div>
+      <div class="kpi-sub">이키 ${S.ikiDB}명 + 직무 ${S.jikDB}명</div>
+    </div>
+    <div class="kpi-card ${goalOk ? 'c-green' : 'c-red'}">
+      <div class="kpi-label">예상 센확 (DB 기준)</div>
+      <div class="kpi-value" style="color:${goalOk ? 'var(--green)' : 'var(--red)'}">${expectedTotal}명 ${goalOk ? '✓' : '↓'}</div>
+      <div class="kpi-sub">이키 ${expectedIki} + 직무 ${expectedJik}</div>
+    </div>
+    <div class="kpi-card c-yellow">
+      <div class="kpi-label">총 광고비</div>
+      <div class="kpi-value" style="color:var(--yellow);font-size:17px;">₩${fmt(totalBudget)}</div>
+      <div class="kpi-sub">이키 ₩${fmt(S.ikiAdBudget)} + 직무 ₩${fmt(S.jikAdBudget)}</div>
+    </div>
+    <div class="kpi-card c-accent">
+      <div class="kpi-label">실제 DB 단가 (이키)</div>
+      <div class="kpi-value" style="color:var(--accent-l);font-size:17px;">₩${fmt(S.ikiDB > 0 ? S.ikiAdBudget / S.ikiDB : 0)}</div>
+      <div class="kpi-sub">₩${fmt(S.ikiAdBudget)} ÷ ${S.ikiDB}명</div>
+    </div>
+    <div class="kpi-card c-accent">
+      <div class="kpi-label">실제 DB 단가 (직무)</div>
+      <div class="kpi-value" style="color:var(--accent-l);font-size:17px;">₩${fmt(S.jikDB > 0 ? S.jikAdBudget / S.jikDB : 0)}</div>
+      <div class="kpi-sub">₩${fmt(S.jikAdBudget)} ÷ ${S.jikDB}명</div>
+    </div>
+  `;
+}
+
+// ================================================================
+//  RENDER STEP GOALS
+// ================================================================
+function renderStepGoals() {
+  document.getElementById('stepGoalSection').innerHTML = '';
+}
+
+// ================================================================
+//  RENDER FUNNEL CARDS
+// ================================================================
+function renderFunnelGrid() {
+  const ikiTrack = calcForward(S.ikiDB, S.rates.iki); // [50,10,6,4,3,2]
+  const jikTrack = calcForward(S.jikDB, S.rates.jik); // [75,15,9,6,4,3]
+
+  function buildCard(label, color, target, track, rates, dbGoal, adBudget) {
+    const dbCount = track[0];
+    const dbPrice = dbGoal > 0 ? Math.round(adBudget / dbGoal) : 0;
+
+    const stageRows = STAGES.map((st, i) => {
+      const count = track[i];
+      const pct   = dbCount > 0 ? (count / dbCount * 100).toFixed(0) : 0;
+      const transRate = i > 0 ? rates[i - 1] : null;
+
+      const arrowRow = transRate !== null ? `
+        <div class="arrow-row">
+          <div class="arrow-line"></div>
+          <div class="arrow-rate">${fmtPct(transRate)} 전환</div>
+          <div class="arrow-line"></div>
+          <div style="font-size:12px;color:var(--text3);">↓</div>
+        </div>` : '';
+
+      const isFinal = i === 5;
+      const isOk    = isFinal && count >= target;
+
+      return `${arrowRow}
+        <div class="stage-row">
+          <div class="stage-icon" style="background:${st.color}">${st.icon}</div>
+          <div class="stage-info">
+            <div class="stage-name">${st.label}</div>
+            <div class="stage-bar-wrap">
+              <div class="stage-bar-track">
+                <div class="stage-bar-fill" style="width:${pct}%;background:${st.color}"></div>
+              </div>
+            </div>
+          </div>
+          <div class="stage-nums">
+            <div class="stage-target" style="color:${isFinal ? (isOk?'var(--green)':'var(--red)') : st.color}">
+              ${count}명 ${isFinal ? (isOk?'✅':'⚠️') : ''}
+            </div>
+            <div class="stage-current">${pct}%</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // 추천 트랙 화살표 표시
+    const trackArrow = track.map((n,i) => {
+      const st = STAGES[i];
+      return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:${st.color};background:${st.color}18;padding:3px 8px;border-radius:10px;">${n}명</span>`
+        + (i < track.length-1 ? '<span style="color:var(--text3);font-size:12px;"> ➡️ </span>' : '');
+    }).join('');
+
+    return `
+      <div class="funnel-card fadein">
+        <div class="funnel-card-header">
+          <div class="funnel-color-bar" style="background:${color}"></div>
+          <div>
+            <div class="funnel-card-name">${label}</div>
+            <div class="funnel-card-sub">DB ${dbGoal}명 기준 순방향 계산 · 1인 DB ₩${fmt(dbPrice)}</div>
+          </div>
+          <div class="funnel-target-badge" style="background:${color}22;color:${color}">
+            센확 목표 ${target}명
+          </div>
+        </div>
+        <div class="stages-wrap">
+          <!-- 추천 트랙 한눈에 -->
+          <div style="background:#f7f8fd;border:1px solid #edf0fb;border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+            <span style="font-size:10px;font-weight:700;color:var(--text3);margin-right:4px;">추천 트랙</span>
+            ${trackArrow}
+          </div>
+          ${stageRows}
+        </div>
+      </div>`;
+  }
+
+  const container = document.getElementById('funnelGrid');
+  container.className = '';
+  container.innerHTML =
+    buildCard('이키가이',  '#ec4899', S.ikiTarget, ikiTrack, S.rates.iki, S.ikiDB, S.ikiAdBudget) +
+    buildCard('직무분석지', '#6448e8', S.jikTarget, jikTrack, S.rates.jik, S.jikDB, S.jikAdBudget);
+}
+
+// ================================================================
+//  RENDER DIAGNOSIS
+// ================================================================
+function renderDiagnosis() {
+  const ikiTrack   = calcForward(S.ikiDB, S.rates.iki);
+  const jikTrack   = calcForward(S.jikDB, S.rates.jik);
+  const totalDB    = S.ikiDB + S.jikDB;
+  const totalBudget = S.ikiAdBudget + S.jikAdBudget;
+  const expectedTotal = ikiTrack[5] + jikTrack[5];
+  const goalOk = expectedTotal >= (S.ikiTarget + S.jikTarget);
+
+  // 추가 DB가 필요한 경우 계산
+  // 이키: 목표 2명을 위해 최소 필요 DB
+  // 영 → 센확 70%: 3명 영 필요 → 육 → 영 80%: 4명 육 → 합 → 육 60%: 7명 합 → 찾 → 합 60%: 12명 찾 → DB 20%: 60명
+  // But 사용자 정의 트랙: 이키 DB 50 → 센확 2, 직무 DB 75 → 센확 3
+  const ikiDBPrice = S.ikiDB > 0 ? Math.round(S.ikiAdBudget / S.ikiDB) : 0;
+  const jikDBPrice = S.jikDB > 0 ? Math.round(S.jikAdBudget / S.jikDB) : 0;
+
+  document.getElementById('diagGrid').innerHTML = `
+    <div class="diag-item">
+      <div class="diag-label">이키가이 DB 단가</div>
+      <div class="diag-value" style="color:#ec4899">₩${fmt(ikiDBPrice)}</div>
+      <div class="diag-sub">₩${fmt(S.ikiAdBudget)} ÷ ${S.ikiDB}명</div>
+    </div>
+    <div class="diag-item">
+      <div class="diag-label">직무분석지 DB 단가</div>
+      <div class="diag-value" style="color:#6448e8">₩${fmt(jikDBPrice)}</div>
+      <div class="diag-sub">₩${fmt(S.jikAdBudget)} ÷ ${S.jikDB}명</div>
+    </div>
+    <div class="diag-item">
+      <div class="diag-label">예상 센확 vs 목표</div>
+      <div class="diag-value" style="color:${goalOk?'var(--green)':'var(--red)'}">
+        ${expectedTotal}명 / ${S.ikiTarget+S.jikTarget}명
+      </div>
+      <div class="diag-sub">${goalOk ? '✅ 목표 달성 가능' : '⚠️ 부족'}</div>
+    </div>
+    <div class="diag-item">
+      <div class="diag-label">총 필요 DB</div>
+      <div class="diag-value" style="color:var(--cyan)">${totalDB}명</div>
+      <div class="diag-sub">이키 ${S.ikiDB} + 직무 ${S.jikDB}</div>
+    </div>
+    <div class="diag-item">
+      <div class="diag-label">총 광고비</div>
+      <div class="diag-value" style="color:var(--yellow);font-size:16px;">₩${fmt(totalBudget)}</div>
+      <div class="diag-sub">이키 ₩${fmt(S.ikiAdBudget)} + 직무 ₩${fmt(S.jikAdBudget)}</div>
+    </div>
+    <div class="diag-item">
+      <div class="diag-label">DB 1명당 평균 단가</div>
+      <div class="diag-value" style="color:var(--accent)">₩${fmt(totalDB>0?totalBudget/totalDB:0)}</div>
+      <div class="diag-sub">₩${fmt(totalBudget)} ÷ ${totalDB}명</div>
+    </div>
+  `;
+
+  let alerts = '';
+
+  if (!goalOk) {
+    const shortfall = (S.ikiTarget + S.jikTarget) - expectedTotal;
+    const avgDBPrice = totalDB > 0 ? totalBudget / totalDB : 10500;
+    // 추가로 몇 명 DB가 더 필요한지 (역산)
+    // 간단 추정: 센확 1명 추가 → 평균 DB ÷ 최종전환율
+    const dbPerFinal = totalDB / Math.max(expectedTotal, 1);
+    const addDB = Math.ceil(shortfall * dbPerFinal);
+    alerts += `
+      <div class="alert alert-warn">
+        <div class="alert-icon">⚠️</div>
+        <div>
+          <div class="alert-title">센확 ${shortfall}명 부족 — 추가 DB/광고비 필요</div>
+          <div class="alert-body">
+            현재 DB(이키 <strong>${S.ikiDB}</strong> + 직무 <strong>${S.jikDB}</strong>)로는 예상 센확 <strong>${expectedTotal}명</strong>으로 목표 <strong>${S.ikiTarget+S.jikTarget}명</strong>에 못 미칩니다.<br>
+            추가로 약 <strong>${addDB}명</strong>의 DB가 더 필요하며, 예상 추가 광고비는 <strong>₩${fmt(addDB * avgDBPrice)}</strong> 입니다.<br>
+            👉 지금 바로 광고비를 늘리거나 찾기(인터뷰) 전환율 개선을 검토하세요.
+          </div>
+        </div>
+      </div>`;
+  } else {
+    alerts += `
+      <div class="alert alert-ok">
+        <div class="alert-icon">✅</div>
+        <div>
+          <div class="alert-title">목표 달성 가능한 DB 확보</div>
+          <div class="alert-body">
+            이키 DB <strong>${S.ikiDB}명</strong> → 예상 센확 <strong>${ikiTrack[5]}명</strong> (목표 ${S.ikiTarget}명)<br>
+            직무 DB <strong>${S.jikDB}명</strong> → 예상 센확 <strong>${jikTrack[5]}명</strong> (목표 ${S.jikTarget}명)<br>
+            각 단계 전환율을 유지하면 총 센확 <strong>${expectedTotal}명</strong> 달성 가능합니다.
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // DB 단가 경고
+  const avgDBPrice = totalDB > 0 ? totalBudget / totalDB : 0;
+  if (avgDBPrice > 12000) {
+    alerts += `
+      <div class="alert alert-warn">
+        <div class="alert-icon">💰</div>
+        <div>
+          <div class="alert-title">DB 단가 ₩${fmt(avgDBPrice)} — 평균 초과</div>
+          <div class="alert-body">
+            현재 DB 단가가 ₩12,000을 초과했습니다. 광고 소재·타겟 최적화를 통해 단가를 낮추세요.<br>
+            단가를 ₩10,500으로 낮추면 같은 예산으로 <strong>${Math.floor(totalBudget/10500) - totalDB}명</strong> 더 확보할 수 있습니다.
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // 전환율 개선 팁
+  const ikiDBperFinal = ikiTrack[5] > 0 ? (S.ikiDB / ikiTrack[5]).toFixed(1) : '—';
+  const jikDBperFinal = jikTrack[5] > 0 ? (S.jikDB / jikTrack[5]).toFixed(1) : '—';
+  alerts += `
+    <div class="alert alert-info">
+      <div class="alert-icon">💡</div>
+      <div>
+        <div class="alert-title">센확 1명당 필요 DB</div>
+        <div class="alert-body">
+          이키가이: DB <strong>${ikiDBperFinal}명</strong>당 센확 1명 / 직무분석지: DB <strong>${jikDBperFinal}명</strong>당 센확 1명<br>
+          찾기(인터뷰) 전환율을 <strong>20% → 25%</strong>로 높이면 필요 DB가 각각 약 <strong>20% 감소</strong>합니다.<br>
+          👉 DB 추가보다 <strong>찾기 → 합자 합격률 개선</strong>이 비용 효율을 높입니다.
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('alertBox').innerHTML = alerts;
+}
+
+// ================================================================
+//  RENDER DAILY BUDGET
+// ================================================================
+function campaignDays() {
+  const s = new Date(S.campStart + 'T00:00:00');
+  const e = new Date(S.campEnd + 'T00:00:00');
+  const diff = Math.floor((e - s) / 86400000) + 1; // 양 끝 포함
+  return (isNaN(diff) || diff < 1) ? 1 : diff;
+}
+
+// 오늘 기준 경과 일수 (1 = 첫날, 0 = 시작 전)
+function elapsedDays(totalDays) {
+  const s = new Date(S.campStart + 'T00:00:00');
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let el = Math.floor((today - s) / 86400000) + 1;
+  if (el < 0) el = 0;
+  if (el > totalDays) el = totalDays;
+  return el;
+}
+
+function renderDailyBudget() {
+  const days = campaignDays();
+  const el = elapsedDays(days);
+  const remain = Math.max(0, days - el);
+
+  const ikiTrack = calcForward(S.ikiDB, S.rates.iki);
+  const jikTrack = calcForward(S.jikDB, S.rates.jik);
+
+  const totalBudget = S.ikiAdBudget + S.jikAdBudget;
+  const totalDB = S.ikiDB + S.jikDB;
+
+  const dailyBudget = totalBudget / days;
+  const dailyDB     = totalDB / days;
+  const dailyChat   = (ikiTrack[1] + jikTrack[1]) / days; // 찾기
+
+  // 기간 배지
+  document.getElementById('dailyPeriodBadge').textContent =
+    `${S.campStart} ~ ${S.campEnd} · 총 ${days}일`;
+
+  // KPI
+  document.getElementById('dailyKpiRow').innerHTML = `
+    <div class="kpi-card c-yellow">
+      <div class="kpi-label">일일 광고비 (총)</div>
+      <div class="kpi-value" style="color:var(--yellow);font-size:18px;">₩${fmt(dailyBudget)}</div>
+      <div class="kpi-sub">₩${fmt(totalBudget)} ÷ ${days}일</div>
+    </div>
+    <div class="kpi-card c-cyan">
+      <div class="kpi-label">일일 DB 목표</div>
+      <div class="kpi-value" style="color:var(--cyan)">${dailyDB.toFixed(1)}명</div>
+      <div class="kpi-sub">${totalDB}명 ÷ ${days}일</div>
+    </div>
+    <div class="kpi-card c-accent">
+      <div class="kpi-label">일일 찾기 목표</div>
+      <div class="kpi-value" style="color:var(--accent-l)">${dailyChat.toFixed(1)}명</div>
+      <div class="kpi-sub">인터뷰 연결 기준</div>
+    </div>
+    <div class="kpi-card c-pink">
+      <div class="kpi-label">남은 일수</div>
+      <div class="kpi-value" style="color:var(--s-final)">${remain}일</div>
+      <div class="kpi-sub">경과 ${el}일 / 총 ${days}일</div>
+    </div>
+  `;
+
+  // 오늘 기준 페이스 (누적 목표 vs 실제 DB 실적)
+  const targetCumDB = dailyDB * el; // 오늘까지 모았어야 할 DB
+  // 실제 누적 DB: 월별 계획 탭의 가능 DB(si=0) 합산
+  let actualCumDB = 0;
+  Object.keys(S.monthly).forEach(k => {
+    if (k.endsWith('_0')) actualCumDB += (S.monthly[k] || 0);
+  });
+  const pacePct = targetCumDB > 0 ? Math.round(actualCumDB / targetCumDB * 100) : 0;
+  const onPace = actualCumDB >= targetCumDB;
+
+  let paceHtml = '';
+  if (el === 0) {
+    paceHtml = `
+      <div class="alert alert-info">
+        <div class="alert-icon">📅</div>
+        <div>
+          <div class="alert-title">캠페인 시작 전</div>
+          <div class="alert-body">
+            집행 시작일은 <strong>${S.campStart}</strong> 입니다.
+            첫날부터 하루 <strong>₩${fmt(dailyBudget)}</strong> / DB <strong>${dailyDB.toFixed(1)}명</strong> 페이스로 집행하세요.
+          </div>
+        </div>
+      </div>`;
+  } else {
+    paceHtml = `
+      <div class="alert ${onPace ? 'alert-ok' : 'alert-warn'}">
+        <div class="alert-icon">${onPace ? '✅' : '⚠️'}</div>
+        <div>
+          <div class="alert-title">오늘 기준 누적 DB ${onPace ? '정상 페이스' : '페이스 부족'} (${pacePct}%)</div>
+          <div class="alert-body">
+            경과 <strong>${el}일</strong> 기준 누적 DB 목표는 <strong>${Math.round(targetCumDB)}명</strong>,
+            실제 입력된 누적 DB는 <strong>${actualCumDB}명</strong> 입니다.${onPace
+              ? ' 현재 페이스를 유지하세요.'
+              : ` 남은 <strong>${remain}일</strong> 동안 부족분을 메우려면 하루 <strong>${remain>0 ? ((totalDB - actualCumDB)/remain).toFixed(1) : '∞'}명</strong>씩 모아야 합니다.`}
+            <br><span style="color:var(--text3);font-size:11px;">※ 실제 누적 DB는 [월별 계획] 탭의 '가능 DB' 입력값을 합산합니다.</span>
+          </div>
+        </div>
+      </div>`;
+  }
+  document.getElementById('dailyPaceBox').innerHTML = paceHtml;
+
+  // 캠페인별 일일 예산 카드
+  function buildDailyCard(label, color, budget, db, track) {
+    const dBudget = budget / days;
+    const dDB = db / days;
+    const dbPrice = db > 0 ? budget / db : 0;
+    return `
+      <div class="funnel-card fadein">
+        <div class="funnel-card-header">
+          <div class="funnel-color-bar" style="background:${color}"></div>
+          <div>
+            <div class="funnel-card-name">${label}</div>
+            <div class="funnel-card-sub">총 ₩${fmt(budget)} · DB ${db}명 · ${days}일</div>
+          </div>
+          <div class="funnel-target-badge" style="background:${color}22;color:${color}">
+            일 ₩${fmt(dBudget)}
+          </div>
+        </div>
+        <div class="stages-wrap">
+          <div class="diag-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0;">
+            <div class="diag-item">
+              <div class="diag-label">일일 광고비</div>
+              <div class="diag-value" style="color:${color}">₩${fmt(dBudget)}</div>
+              <div class="diag-sub">₩${fmt(budget)} ÷ ${days}일</div>
+            </div>
+            <div class="diag-item">
+              <div class="diag-label">일일 DB 목표</div>
+              <div class="diag-value" style="color:var(--cyan)">${dDB.toFixed(1)}명</div>
+              <div class="diag-sub">${db}명 ÷ ${days}일</div>
+            </div>
+            <div class="diag-item">
+              <div class="diag-label">DB 1명 단가</div>
+              <div class="diag-value" style="color:var(--accent)">₩${fmt(dbPrice)}</div>
+              <div class="diag-sub">목표 단가</div>
+            </div>
+            <div class="diag-item">
+              <div class="diag-label">일일 찾기 목표</div>
+              <div class="diag-value" style="color:var(--s-chat)">${(track[1]/days).toFixed(1)}명</div>
+              <div class="diag-sub">${track[1]}명 ÷ ${days}일</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('dailyBudgetGrid').innerHTML =
+    buildDailyCard('🩷 이키가이',  '#ec4899', S.ikiAdBudget, S.ikiDB, ikiTrack) +
+    buildDailyCard('💜 직무분석지', '#6448e8', S.jikAdBudget, S.jikDB, jikTrack);
+
+  // 단계별 일일 목표 테이블
+  const stageNames = ['가능 DB','찾기','합자','육','영','센확'];
+  const stageColors = ['#0891b2','#f59e0b','#22c55e','#06b6d4','#8b5cf6','#ec4899'];
+  const totals = STAGES.map((_, i) => ikiTrack[i] + jikTrack[i]);
+
+  let th = `<tr><th style="text-align:left;">단계</th><th>전체 목표</th><th>일일 목표</th><th>이키 일일</th><th>직무 일일</th></tr>`;
+  let rows = '';
+  stageNames.forEach((sn, i) => {
+    const color = stageColors[i];
+    rows += `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+          <span>${sn}</span>
+        </div>
+      </td>
+      <td><strong>${totals[i]}명</strong></td>
+      <td style="color:${color};font-weight:800;">${(totals[i]/days).toFixed(2)}명</td>
+      <td style="color:var(--text2);">${(ikiTrack[i]/days).toFixed(2)}명</td>
+      <td style="color:var(--text2);">${(jikTrack[i]/days).toFixed(2)}명</td>
+    </tr>`;
+  });
+  document.getElementById('dailyStageTable').innerHTML = `<thead>${th}</thead><tbody>${rows}</tbody>`;
+}
+
+// ================================================================
+//  RENDER MONTHLY TABLE
+// ================================================================
+function renderMonthlyTable() {
+  const months = [];
+  const base = new Date(S.month + '-01');
+  for (let i = -1; i <= 3; i++) {
+    const d = new Date(base);
+    d.setMonth(d.getMonth() + i);
+    months.push(d.toISOString().slice(0, 7));
+  }
+
+  const ikiTrack = calcForward(S.ikiDB, S.rates.iki);
+  const jikTrack = calcForward(S.jikDB, S.rates.jik);
+
+  const stageColors = ['#0891b2','#f59e0b','#22c55e','#06b6d4','#8b5cf6','#ec4899'];
+  const stageNames = ['가능 DB','찾기','합자','육','영','센확(이키)','센확(직무)'];
+  const targets = [
+    ikiTrack[0] + jikTrack[0],
+    ikiTrack[1] + jikTrack[1],
+    ikiTrack[2] + jikTrack[2],
+    ikiTrack[3] + jikTrack[3],
+    ikiTrack[4] + jikTrack[4],
+    S.ikiTarget,
+    S.jikTarget,
+  ];
+  const colors7 = [...stageColors, '#6448e8'];
+
+  let th = `<tr><th style="min-width:100px;">단계 / 목표</th>`;
+  months.forEach(m => { th += `<th>${fmtMon(m)}</th>`; });
+  th += `</tr>`;
+
+  let rows = '';
+  stageNames.forEach((sn, si) => {
+    const color = colors7[si] || '#6448e8';
+    rows += `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+          <span>${sn}</span>
+          <span style="font-size:10px;color:var(--text3);font-weight:600;">(목표 ${targets[si]}명)</span>
+        </div>
+      </td>`;
+    months.forEach(m => {
+      const key = `${m}_${si}`;
+      const val = (S.monthly[key] !== undefined) ? S.monthly[key] : '';
+      const pct = val !== '' && targets[si] ? Math.min(100, Math.round(val / targets[si] * 100)) : 0;
+      const isCurrentMonth = m === S.month;
+      rows += `<td style="${isCurrentMonth ? 'background:rgba(100,72,232,0.04);' : ''}">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+          <input class="actual-input" type="number" min="0" value="${val}"
+            style="color:${color}"
+            onchange="updateMonthly('${key}', this.value)"
+            placeholder="—">
+          ${val !== '' ? `<div style="font-size:9px;color:${pct>=100?'var(--green)':pct>=70?'var(--yellow)':'var(--text3)'};">${pct}%</div>` : ''}
+        </div>
+      </td>`;
+    });
+    rows += `</tr>`;
+  });
+
+  document.getElementById('monthTable').innerHTML = `<thead>${th}</thead><tbody>${rows}</tbody>`;
+}
+
+function updateMonthly(key, val) {
+  const n = parseInt(val);
+  if (isNaN(n) || n < 0) { delete S.monthly[key]; }
+  else { S.monthly[key] = n; }
+  persist();
+  toast('💾 저장됨');
+}
+
+// ================================================================
+//  RENDER RATE GRID (settings tab)
+// ================================================================
+function renderRateGrid() {
+  document.getElementById('rateGrid').innerHTML = TRANS_LABELS.map((tl, i) => {
+    const rateDesc = [
+      '가능 DB 중 인터뷰까지 연결되는 비율',
+      '인터뷰 → 내면상담(합자) 전환율',
+      '합자 → 육따기 전환율 (ceil 적용)',
+      '육따기 → 영상담 전환율',
+      '영상담 → 오티확답(센확) 전환율',
+    ][i];
+    return `
+    <div class="diag-item">
+      <div class="diag-label">${tl.label}</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px;">${rateDesc}</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div>
+          <div style="font-size:10px;color:#ec4899;font-weight:700;margin-bottom:3px;">🩷 이키가이</div>
+          <input class="form-input" type="number" min="1" max="100" step="1"
+            id="rate-iki-${i}" value="${Math.round(S.rates.iki[i]*100)}"
+            style="padding:6px 10px;font-size:13px;">
+          <div class="form-hint">%</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:#6448e8;font-weight:700;margin-bottom:3px;">💜 직무분석지</div>
+          <input class="form-input" type="number" min="1" max="100" step="1"
+            id="rate-jik-${i}" value="${Math.round(S.rates.jik[i]*100)}"
+            style="padding:6px 10px;font-size:13px;">
+          <div class="form-hint">%</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Fill settings form values
+  document.getElementById('set-iki-target').value = S.ikiTarget;
+  document.getElementById('set-jik-target').value = S.jikTarget;
+  document.getElementById('set-month').value = S.month;
+  document.getElementById('set-camp-start').value = S.campStart;
+  document.getElementById('set-camp-end').value = S.campEnd;
+  document.getElementById('set-iki-db').value = S.ikiDB;
+  document.getElementById('set-jik-db').value = S.jikDB;
+  document.getElementById('set-iki-budget').value = S.ikiAdBudget;
+  document.getElementById('set-jik-budget').value = S.jikAdBudget;
+}
+
+// ================================================================
+//  SAVE SETTINGS
+// ================================================================
+function saveSettings() {
+  S.ikiTarget    = parseInt(document.getElementById('set-iki-target').value) || 2;
+  S.jikTarget    = parseInt(document.getElementById('set-jik-target').value) || 3;
+  S.month        = document.getElementById('set-month').value || '2026-07';
+  S.campStart    = document.getElementById('set-camp-start').value || '2026-07-01';
+  S.campEnd      = document.getElementById('set-camp-end').value || '2026-07-31';
+  S.ikiDB        = parseInt(document.getElementById('set-iki-db').value) || 50;
+  S.jikDB        = parseInt(document.getElementById('set-jik-db').value) || 75;
+  S.ikiAdBudget  = parseInt(document.getElementById('set-iki-budget').value) || 500000;
+  S.jikAdBudget  = parseInt(document.getElementById('set-jik-budget').value) || 500000;
+
+  TRANS_LABELS.forEach((_, i) => {
+    const iki = parseFloat(document.getElementById(`rate-iki-${i}`).value);
+    const jik = parseFloat(document.getElementById(`rate-jik-${i}`).value);
+    if (!isNaN(iki)) S.rates.iki[i] = iki / 100;
+    if (!isNaN(jik)) S.rates.jik[i] = jik / 100;
+  });
+
+  persist();
+  renderAll();
+  toast('✅ 설정이 저장되었습니다');
+}
+
+// ================================================================
+//  RECALC (button)
+// ================================================================
+function recalc() {
+  renderAll();
+  toast('🔄 목표가 재계산되었습니다');
+}
+
+// ================================================================
+//  TABS
+// ================================================================
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  event.target.classList.add('active');
+
+  if (name === 'settings') renderRateGrid();
+  if (name === 'monthly') renderMonthlyTable();
+  if (name === 'daily') renderDailyBudget();
+}
+
+// ================================================================
+//  EXPORT
+// ================================================================
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `위잇_목표관리_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast('📤 내보내기 완료');
+}
+
+// ================================================================
+//  TOAST
+// ================================================================
+function toast(msg) {
+  const box = document.getElementById('toastBox');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = msg;
+  box.appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 300); }, 2800);
+}
+
+// ================================================================
+//  RENDER ALL
+// ================================================================
+function renderAll() {
+  renderStepGoals();
+  renderKPI();
+  renderFunnelGrid();
+  renderDiagnosis();
+  renderDailyBudget();
+}
+
+// ================================================================
+//  AI DIAGNOSIS LOGIC
+// ================================================================
+function openAIDiagModal() {
+  document.getElementById('aiDiagModal').classList.add('open');
+}
+function closeAIDiagModal() {
+  document.getElementById('aiDiagModal').classList.remove('open');
+  document.getElementById('aiDiagResult').style.display = 'none';
+  document.getElementById('aiImgInput').value = '';
+}
+function handleAiUpload(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      const previewHtml = `<div style="margin-bottom: 15px; text-align: center;"><img src="${e.target.result}" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.05);" /></div>`;
+      
+      const res = document.getElementById('aiDiagResult');
+      res.style.display = 'block';
+      res.innerHTML = previewHtml + '<div style="text-align:center; padding: 10px;">이미지 분석 중... ⏳</div>';
+      
+      // Simulate AI response delay
+      setTimeout(() => {
+        res.innerHTML = previewHtml + `
+          <div style="font-weight: 800; margin-bottom: 6px; color: #1d4ed8;">💡 AI 코칭 리포트 (시뮬레이션)</div>
+          <div style="color: #1e3a8a; font-size: 13px;">
+            🚨 업로드하신 이미지를 분석한 결과, 현재 <strong>랜딩 페이지 조회당 비용이 474원</strong>입니다.<br><br>
+            만약 랜딩 페이지 → DB 전환율이 10%라면 <strong>가능 DB 단가는 약 4,740원</strong>입니다.<br>
+            현재 설정된 센확 목표 달성을 위해 <strong>가능 DB가 30명 더 필요</strong>하며, 약 <strong>14만 원의 예산 증액</strong>이 필요합니다.<br><br>
+            👉 <strong>찾기 전환율</strong>을 현재 20%에서 25%로 개선하시면 추가 예산 없이도 목표 달성이 가능합니다!
+          </div>
+        `;
+      }, 1500);
+    };
+    
+    reader.readAsDataURL(file);
+  }
+}
+
+// ================================================================
+//  INIT
+// ================================================================
+loadState();
+renderAll();
+</script>
+</body>
+</html>
