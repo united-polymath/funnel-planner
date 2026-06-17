@@ -609,6 +609,54 @@
     .cal-sum-ok    { color: var(--green);  font-weight: 800; }
     .cal-sum-over  { color: var(--red);    font-weight: 800; }
     .cal-sum-under { color: var(--yellow); font-weight: 800; }
+
+    /* ===== CAMPAIGN MANAGER ===== */
+    .camp-block { border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 10px; overflow: hidden; }
+    .camp-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #f7f8fd; }
+    .camp-dot { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+    .camp-name-input { font-size: 13px; font-weight: 800; border: none; background: transparent; outline: none; color: var(--text1); width: 130px; border-bottom: 1px dashed transparent; }
+    .camp-name-input:hover, .camp-name-input:focus { border-bottom-color: var(--border2); }
+    .set-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .set-row.off { opacity: 0.55; background: repeating-linear-gradient(45deg, #fafbff, #fafbff 8px, #f2f3fa 8px, #f2f3fa 16px); }
+    .set-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .set-name-input { font-size: 12px; font-weight: 700; border: none; background: transparent; outline: none; color: var(--text2); width: 70px; border-bottom: 1px dashed var(--border2); }
+    .mini-num { width: 96px; font-size: 12px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; outline: none; font-family: inherit; text-align: right; }
+    .mini-num:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    .mini-label { font-size: 10px; font-weight: 700; color: var(--text3); }
+    .icon-btn { border: none; background: transparent; cursor: pointer; font-size: 13px; color: var(--text3); padding: 4px 6px; border-radius: 5px; }
+    .icon-btn:hover { background: #eef0f8; color: var(--red); }
+
+    /* ON/OFF 토글 */
+    .toggle { position: relative; width: 38px; height: 21px; flex-shrink: 0; cursor: pointer; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle .track { position: absolute; inset: 0; background: #cbd0e6; border-radius: 20px; transition: 0.2s; }
+    .toggle .thumb { position: absolute; top: 2px; left: 2px; width: 17px; height: 17px; background: #fff; border-radius: 50%; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .toggle input:checked + .track { background: var(--green); }
+    .toggle input:checked + .track + .thumb { transform: translateX(17px); }
+
+    /* 캘린더 세트 칩 */
+    .cal-set { display: flex; align-items: center; gap: 4px; font-size: 10px; line-height: 1.3; margin-top: 2px; }
+    .cal-set .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .cal-set .amt { font-weight: 800; cursor: pointer; padding: 0 2px; border-radius: 3px; }
+    .cal-set .amt:hover { background: rgba(100,72,232,0.12); }
+    .cal-set .amt.locked { text-decoration: underline; text-decoration-style: dotted; }
+    .cal-total { font-size: 11px; font-weight: 800; color: var(--text1); margin-top: 4px; padding-top: 3px; border-top: 1px solid var(--border); text-align: right; }
+    .cal-clear { cursor: pointer; color: var(--text3); font-size: 9px; }
+    .cal-clear:hover { color: var(--red); }
+    .cal-cell { min-height: 78px; }
+
+    /* 범례 */
+    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: var(--text2); }
+    .legend-item .dot { width: 9px; height: 9px; border-radius: 50%; }
+    .legend-item.paused { opacity: 0.5; }
+
+    /* 요일 가중치 */
+    .ww-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .ww-cell { text-align: center; }
+    .ww-cell label { display: block; font-size: 10px; font-weight: 700; color: var(--text3); margin-bottom: 3px; }
+    .ww-cell input { width: 100%; text-align: center; font-size: 12px; padding: 5px 2px; border: 1px solid var(--border); border-radius: 6px; outline: none; font-family: inherit; }
+    .ww-cell input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
   </style>
 </head>
 <body>
@@ -715,45 +763,65 @@
   ============================== -->
   <div id="tab-daily" class="tab-panel">
 
-    <!-- 기간 요약 바 -->
+    <!-- 설정: 마감일 + 요일 가중치 -->
     <div class="card fadein" style="margin-bottom:16px;">
       <div class="card-header">
-        <div class="card-title">💰 일일 광고비 / 일일 목표</div>
-        <div class="card-badge" id="dailyPeriodBadge">기간 –</div>
-        <div style="margin-left:auto;font-size:11px;color:var(--text2);">설정 탭에서 시작일·마감일을 바꾸면 자동 재계산됩니다</div>
+        <div class="card-title">⚙️ 광고 예산 설정</div>
+        <div style="margin-left:auto;font-size:11px;color:var(--text2);">오늘 ~ 마감일까지 요일 가중치로 자동 분배</div>
       </div>
       <div class="card-body">
-        <div class="kpi-row" id="dailyKpiRow" style="margin-bottom:0;"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;">
+          <div>
+            <div class="mini-label" style="margin-bottom:5px;">공통 마감일</div>
+            <input type="date" id="adDeadlineInput" class="mini-num" style="width:160px;text-align:left;" onchange="setAdDeadline(this.value)">
+            <div style="font-size:10px;color:var(--text3);margin-top:4px;" id="adDaysLeft"></div>
+          </div>
+          <div style="flex:1;min-width:340px;">
+            <div class="mini-label" style="margin-bottom:5px;">요일 가중치 — 클수록 그 요일에 예산을 더 배분 (주말강세 기본)</div>
+            <div class="ww-grid" id="weekdayWeights"></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- 오늘 기준 페이스 -->
-    <div id="dailyPaceBox" style="margin-bottom:16px;"></div>
-
-    <!-- 일일 광고비 캘린더 (날짜별 개별 수정) -->
+    <!-- 캠페인 / 광고세트 관리 -->
     <div class="card fadein" style="margin-bottom:16px;">
-      <div class="card-header" style="flex-wrap:wrap;gap:8px;">
-        <div class="card-title">📅 일일 광고비 캘린더</div>
-        <div id="dailyCalTabs" style="display:flex;gap:4px;margin-left:6px;"></div>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
-          <span id="dailyCalSum" style="font-size:12px;color:var(--text2);"></span>
-          <button class="btn btn-ghost" onclick="resetDailyBudget()" title="모든 날짜를 총예산÷일수로 되돌립니다">↺ 균등분배 초기화</button>
+      <div class="card-header">
+        <div class="card-title">🎯 캠페인 / 광고세트 관리</div>
+        <div style="margin-left:auto;">
+          <button class="btn btn-primary" onclick="addCampaign()">+ 캠페인 추가</button>
         </div>
       </div>
       <div class="card-body">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">💡 날짜 칸의 금액을 <strong>더블클릭</strong>하면 그 날의 광고비를 개별로 수정할 수 있어요. (수정 안 한 날은 균등분배 금액으로 표시)</div>
-        <div id="dailyCalendar"></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">💡 A/B 등은 캠페인 안에 <strong>광고세트</strong>로 추가하세요. <strong>ON/OFF</strong>로 끄면 그 세트의 집행액만 남고, 남은 예산은 켜진 세트들에 자동 재분배됩니다.</div>
+        <div id="campManager"></div>
+        <div id="pausedBanner"></div>
       </div>
     </div>
 
-    <!-- 캠페인별 일일 예산 -->
-    <div class="funnel-grid" id="dailyBudgetGrid" style="margin-bottom:16px;"></div>
+    <!-- KPI -->
+    <div class="kpi-row" id="dailyKpiRow"></div>
+
+    <!-- 통합 캘린더 -->
+    <div class="card fadein" style="margin-bottom:16px;">
+      <div class="card-header" style="flex-wrap:wrap;gap:8px;">
+        <div class="card-title">📅 통합 광고비 캘린더</div>
+        <div style="margin-left:auto;">
+          <button class="btn btn-ghost" onclick="resetAllOverrides()" title="수동 고정한 날짜를 모두 자동분배로 되돌립니다">↺ 전체 자동 재분배</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">💡 날짜 칸의 금액을 <strong>더블클릭</strong>하면 그 날 그 세트 광고비를 고정합니다. 고정하면 나머지 날짜에 자동 재분배돼요. (밑줄=고정, ✕=고정 해제)</div>
+        <div class="legend" id="calLegend"></div>
+        <div id="adCalendar"></div>
+      </div>
+    </div>
 
     <!-- 단계별 일일 목표 -->
     <div class="card fadein">
       <div class="card-header">
         <div class="card-title">📋 단계별 일일 목표 (직무 + 이키 합산)</div>
-        <div style="margin-left:auto;font-size:11px;color:var(--text2);">전체 목표 ÷ 집행 일수</div>
+        <div style="margin-left:auto;font-size:11px;color:var(--text2);">퍼널 목표 ÷ 남은 일수</div>
       </div>
       <div class="card-body" style="overflow-x:auto;">
         <table class="month-table" id="dailyStageTable"></table>
@@ -917,7 +985,7 @@ const TRANS_LABELS = [
   { from:'video', to:'final', label:'영 → 센확' },
 ];
 
-const STATE_VER = 6; // bump to reset localStorage on schema change
+const STATE_VER = 7; // bump to reset localStorage on schema change
 
 let S = {
   _ver: STATE_VER,
@@ -949,12 +1017,20 @@ let S = {
     jik: [0, 0, 0, 0, 0, 0],
   },
 
-  // 날짜별 일일 광고비 (달력에서 개별 수정). 값이 없는 날짜는 "총예산÷일수" 균등분배로 표시
-  // 예: { iki: { "2026-07-01": 15000 }, jik: {} }
-  dailyBudget: {
-    iki: {},
-    jik: {},
-  },
+  // ===== 광고 예산 캘린더 (통합) =====
+  // 캠페인 > 광고세트(A/B 등) 구조. 마감일은 전체 공통(adDeadline).
+  // 각 세트: budget(배정 예산), spent(집행액), active(ON/OFF), daily(날짜별 수동 수정 override)
+  // OFF면 (budget-spent) 잔액이 켜진 세트들에 자동 재분배됨.
+  campaigns: [
+    { id: 'c1', name: '이키가이', color: '#ec4899',
+      sets: [ { id: 's1', name: '기본', color: '#ec4899', budget: 400000, spent: 0, active: true, daily: {} } ] },
+    { id: 'c2', name: '직무분석지', color: '#6448e8',
+      sets: [ { id: 's2', name: '기본', color: '#6448e8', budget: 600000, spent: 0, active: true, daily: {} } ] },
+  ],
+  adDeadline: '2026-07-31',
+  // 요일 가중치 [일,월,화,수,목,금,토] — 주말강세 (주말이 더 잘 터짐). 수정 가능
+  weekdayWeights: [1.25, 0.9, 0.9, 0.9, 0.95, 1.1, 1.3],
+  _seq: 2, // id 생성용 카운터
 
   monthly: {},
 };
@@ -1262,189 +1338,7 @@ function renderDiagnosis() {
 // ================================================================
 //  RENDER DAILY BUDGET
 // ================================================================
-function campaignDays() {
-  const s = new Date(S.campStart + 'T00:00:00');
-  const e = new Date(S.campEnd + 'T00:00:00');
-  const diff = Math.floor((e - s) / 86400000) + 1; // 양 끝 포함
-  return (isNaN(diff) || diff < 1) ? 1 : diff;
-}
-
-// 오늘 기준 경과 일수 (1 = 첫날, 0 = 시작 전)
-function elapsedDays(totalDays) {
-  const s = new Date(S.campStart + 'T00:00:00');
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  let el = Math.floor((today - s) / 86400000) + 1;
-  if (el < 0) el = 0;
-  if (el > totalDays) el = totalDays;
-  return el;
-}
-
-function renderDailyBudget() {
-  const days = campaignDays();
-  const el = elapsedDays(days);
-  const remain = Math.max(0, days - el);
-
-  const ikiTrack = calcForward(S.ikiDB, S.rates.iki);
-  const jikTrack = calcForward(S.jikDB, S.rates.jik);
-
-  const totalBudget = S.ikiAdBudget + S.jikAdBudget;
-  const totalDB = S.ikiDB + S.jikDB;
-
-  const dailyBudget = totalBudget / days;
-  const dailyDB     = totalDB / days;
-  const dailyChat   = (ikiTrack[1] + jikTrack[1]) / days; // 찾기
-
-  // 기간 배지
-  document.getElementById('dailyPeriodBadge').textContent =
-    `${S.campStart} ~ ${S.campEnd} · 총 ${days}일`;
-
-  // KPI
-  document.getElementById('dailyKpiRow').innerHTML = `
-    <div class="kpi-card c-yellow">
-      <div class="kpi-label">일일 광고비 (총)</div>
-      <div class="kpi-value" style="color:var(--yellow);font-size:18px;">₩${fmt(dailyBudget)}</div>
-      <div class="kpi-sub">₩${fmt(totalBudget)} ÷ ${days}일</div>
-    </div>
-    <div class="kpi-card c-cyan">
-      <div class="kpi-label">일일 DB 목표</div>
-      <div class="kpi-value" style="color:var(--cyan)">${dailyDB.toFixed(1)}명</div>
-      <div class="kpi-sub">${totalDB}명 ÷ ${days}일</div>
-    </div>
-    <div class="kpi-card c-accent">
-      <div class="kpi-label">일일 찾기 목표</div>
-      <div class="kpi-value" style="color:var(--accent-l)">${dailyChat.toFixed(1)}명</div>
-      <div class="kpi-sub">인터뷰 연결 기준</div>
-    </div>
-    <div class="kpi-card c-pink">
-      <div class="kpi-label">남은 일수</div>
-      <div class="kpi-value" style="color:var(--s-final)">${remain}일</div>
-      <div class="kpi-sub">경과 ${el}일 / 총 ${days}일</div>
-    </div>
-  `;
-
-  // 오늘 기준 페이스 (누적 목표 vs 실제 DB 실적)
-  const targetCumDB = dailyDB * el; // 오늘까지 모았어야 할 DB
-  // 실제 누적 DB: 월별 계획 탭의 가능 DB(si=0) 합산
-  let actualCumDB = 0;
-  Object.keys(S.monthly).forEach(k => {
-    if (k.endsWith('_0')) actualCumDB += (S.monthly[k] || 0);
-  });
-  const pacePct = targetCumDB > 0 ? Math.round(actualCumDB / targetCumDB * 100) : 0;
-  const onPace = actualCumDB >= targetCumDB;
-
-  let paceHtml = '';
-  if (el === 0) {
-    paceHtml = `
-      <div class="alert alert-info">
-        <div class="alert-icon">📅</div>
-        <div>
-          <div class="alert-title">캠페인 시작 전</div>
-          <div class="alert-body">
-            집행 시작일은 <strong>${S.campStart}</strong> 입니다.
-            첫날부터 하루 <strong>₩${fmt(dailyBudget)}</strong> / DB <strong>${dailyDB.toFixed(1)}명</strong> 페이스로 집행하세요.
-          </div>
-        </div>
-      </div>`;
-  } else {
-    paceHtml = `
-      <div class="alert ${onPace ? 'alert-ok' : 'alert-warn'}">
-        <div class="alert-icon">${onPace ? '✅' : '⚠️'}</div>
-        <div>
-          <div class="alert-title">오늘 기준 누적 DB ${onPace ? '정상 페이스' : '페이스 부족'} (${pacePct}%)</div>
-          <div class="alert-body">
-            경과 <strong>${el}일</strong> 기준 누적 DB 목표는 <strong>${Math.round(targetCumDB)}명</strong>,
-            실제 입력된 누적 DB는 <strong>${actualCumDB}명</strong> 입니다.${onPace
-              ? ' 현재 페이스를 유지하세요.'
-              : ` 남은 <strong>${remain}일</strong> 동안 부족분을 메우려면 하루 <strong>${remain>0 ? ((totalDB - actualCumDB)/remain).toFixed(1) : '∞'}명</strong>씩 모아야 합니다.`}
-            <br><span style="color:var(--text3);font-size:11px;">※ 실제 누적 DB는 [월별 계획] 탭의 '가능 DB' 입력값을 합산합니다.</span>
-          </div>
-        </div>
-      </div>`;
-  }
-  document.getElementById('dailyPaceBox').innerHTML = paceHtml;
-
-  // 캠페인별 일일 예산 카드
-  function buildDailyCard(label, color, budget, db, track) {
-    const dBudget = budget / days;
-    const dDB = db / days;
-    const dbPrice = db > 0 ? budget / db : 0;
-    return `
-      <div class="funnel-card fadein">
-        <div class="funnel-card-header">
-          <div class="funnel-color-bar" style="background:${color}"></div>
-          <div>
-            <div class="funnel-card-name">${label}</div>
-            <div class="funnel-card-sub">총 ₩${fmt(budget)} · DB ${db}명 · ${days}일</div>
-          </div>
-          <div class="funnel-target-badge" style="background:${color}22;color:${color}">
-            일 ₩${fmt(dBudget)}
-          </div>
-        </div>
-        <div class="stages-wrap">
-          <div class="diag-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0;">
-            <div class="diag-item">
-              <div class="diag-label">일일 광고비</div>
-              <div class="diag-value" style="color:${color}">₩${fmt(dBudget)}</div>
-              <div class="diag-sub">₩${fmt(budget)} ÷ ${days}일</div>
-            </div>
-            <div class="diag-item">
-              <div class="diag-label">일일 DB 목표</div>
-              <div class="diag-value" style="color:var(--cyan)">${dDB.toFixed(1)}명</div>
-              <div class="diag-sub">${db}명 ÷ ${days}일</div>
-            </div>
-            <div class="diag-item">
-              <div class="diag-label">DB 1명 단가</div>
-              <div class="diag-value" style="color:var(--accent)">₩${fmt(dbPrice)}</div>
-              <div class="diag-sub">목표 단가</div>
-            </div>
-            <div class="diag-item">
-              <div class="diag-label">일일 찾기 목표</div>
-              <div class="diag-value" style="color:var(--s-chat)">${(track[1]/days).toFixed(1)}명</div>
-              <div class="diag-sub">${track[1]}명 ÷ ${days}일</div>
-            </div>
-          </div>
-        </div>
-      </div>`;
-  }
-
-  document.getElementById('dailyBudgetGrid').innerHTML =
-    buildDailyCard('🩷 이키가이',  '#ec4899', S.ikiAdBudget, S.ikiDB, ikiTrack) +
-    buildDailyCard('💜 직무분석지', '#6448e8', S.jikAdBudget, S.jikDB, jikTrack);
-
-  // 단계별 일일 목표 테이블
-  const stageNames = ['가능 DB','찾기','합자','육','영','센확'];
-  const stageColors = ['#0891b2','#f59e0b','#22c55e','#06b6d4','#8b5cf6','#ec4899'];
-  const totals = STAGES.map((_, i) => ikiTrack[i] + jikTrack[i]);
-
-  let th = `<tr><th style="text-align:left;">단계</th><th>전체 목표</th><th>일일 목표</th><th>이키 일일</th><th>직무 일일</th></tr>`;
-  let rows = '';
-  stageNames.forEach((sn, i) => {
-    const color = stageColors[i];
-    rows += `<tr>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></div>
-          <span>${sn}</span>
-        </div>
-      </td>
-      <td><strong>${totals[i]}명</strong></td>
-      <td style="color:${color};font-weight:800;">${(totals[i]/days).toFixed(2)}명</td>
-      <td style="color:var(--text2);">${(ikiTrack[i]/days).toFixed(2)}명</td>
-      <td style="color:var(--text2);">${(jikTrack[i]/days).toFixed(2)}명</td>
-    </tr>`;
-  });
-  document.getElementById('dailyStageTable').innerHTML = `<thead>${th}</thead><tbody>${rows}</tbody>`;
-
-  renderDailyCalendar();
-}
-
-// ================================================================
-//  RENDER DAILY BUDGET CALENDAR (날짜별 개별 수정)
-// ================================================================
-let dailyCalCampaign = 'iki';
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-
+// ---- 날짜 유틸 ----
 function ymd(d) {
   return d.getFullYear() + '-' +
     String(d.getMonth() + 1).padStart(2, '0') + '-' +
@@ -1454,94 +1348,302 @@ function todayYmd() {
   const n = new Date();
   return ymd(new Date(n.getFullYear(), n.getMonth(), n.getDate()));
 }
+function wWeight(dateStr) {
+  const w = S.weekdayWeights[new Date(dateStr + 'T00:00:00').getDay()];
+  return (w == null || isNaN(w)) ? 1 : w;
+}
+// 오늘 ~ 마감일 (양끝 포함) 날짜 배열
+function adRangeDates() {
+  const t = todayYmd(), end = S.adDeadline;
+  if (!end || end < t) return [];
+  const out = [];
+  for (let d = new Date(t + 'T00:00:00'); ymd(d) <= end; d.setDate(d.getDate() + 1)) out.push(ymd(d));
+  return out;
+}
+function escAttr(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
 
-function setDailyCalCampaign(k) { dailyCalCampaign = k; renderDailyCalendar(); }
-
-function resetDailyBudget() {
-  S.dailyBudget[dailyCalCampaign] = {};
-  persist();
-  renderDailyCalendar();
-  toast('↺ 균등분배로 초기화되었습니다');
+// 세트 순회/검색
+function forEachSet(fn) { S.campaigns.forEach(c => c.sets.forEach(s => fn(s, c))); }
+function findSet(setId) {
+  for (const c of S.campaigns) for (const s of c.sets) if (s.id === setId) return { campaign: c, set: s };
+  return null;
 }
 
-function renderDailyCalendar() {
-  const key = dailyCalCampaign;
-  const color = key === 'iki' ? '#ec4899' : '#6448e8';
-  const totalBudget = key === 'iki' ? S.ikiAdBudget : S.jikAdBudget;
+// ---- 핵심 계산: 각 세트의 날짜별 effective 금액 (OFF 잔액 자동 재분배 포함) ----
+function computeAllSets() {
+  const range = adRangeDates();
+  const rangeSet = new Set(range);
 
-  // 캠페인 선택 탭
-  const tabs = [
-    { k: 'iki', label: '🩷 이키가이', c: '#ec4899' },
-    { k: 'jik', label: '💜 직무분석지', c: '#6448e8' },
-  ].map(t => `
-    <button class="cal-camp-tab ${t.k === key ? 'active' : ''}"
-      style="${t.k === key ? `background:${t.c}` : ''}"
-      onclick="setDailyCalCampaign('${t.k}')">${t.label}</button>`).join('');
-  document.getElementById('dailyCalTabs').innerHTML = tabs;
+  let freedPool = 0, sumActiveBudget = 0;
+  const activeSets = [];
+  forEachSet(s => {
+    const b = Math.max(0, s.budget || 0), sp = Math.max(0, s.spent || 0);
+    if (s.active) { activeSets.push(s); sumActiveBudget += b; }
+    else { freedPool += Math.max(0, b - sp); }
+  });
 
-  const start = new Date(S.campStart + 'T00:00:00');
-  const end   = new Date(S.campEnd + 'T00:00:00');
+  const result = {};
+  forEachSet(s => {
+    if (!s.active) { result[s.id] = { active: false, spent: Math.max(0, s.spent || 0), map: {}, lockedSet: new Set() }; return; }
+    const b = Math.max(0, s.budget || 0), sp = Math.max(0, s.spent || 0);
+    const share = sumActiveBudget > 0 ? freedPool * (b / sumActiveBudget)
+                : (activeSets.length ? freedPool / activeSets.length : 0);
+    const effBudget = b + share;
+
+    let lockedSum = 0; const locked = {};
+    Object.keys(s.daily || {}).forEach(dt => { if (rangeSet.has(dt)) { locked[dt] = s.daily[dt]; lockedSum += s.daily[dt]; } });
+    const distributable = Math.max(0, effBudget - sp - lockedSum);
+    const nonLocked = range.filter(d => !(d in locked));
+    let wsum = 0; nonLocked.forEach(d => wsum += wWeight(d));
+    const map = {};
+    range.forEach(d => { map[d] = (d in locked) ? locked[d] : (wsum > 0 ? Math.round(distributable * wWeight(d) / wsum) : 0); });
+    result[s.id] = { active: true, spent: sp, effBudget, share, map, lockedSet: new Set(Object.keys(locked)) };
+  });
+  return result;
+}
+
+// ---- 색상 팔레트 & CRUD ----
+const PALETTE = ['#ec4899','#6448e8','#0891b2','#f59e0b','#22c55e','#8b5cf6','#ef4444','#14b8a6','#eab308','#3b82f6'];
+function nextColor() { let n = 0; S.campaigns.forEach(c => n += c.sets.length); return PALETTE[n % PALETTE.length]; }
+function newId(p) { S._seq = (S._seq || 0) + 1; return p + S._seq; }
+
+function addCampaign() {
+  const col = nextColor();
+  S.campaigns.push({ id: newId('c'), name: '새 캠페인', color: col,
+    sets: [{ id: newId('s'), name: '기본', color: col, budget: 0, spent: 0, active: true, daily: {} }] });
+  persist(); renderDailyBudget(); toast('캠페인 추가됨');
+}
+function removeCampaign(cid) {
+  if (!confirm('이 캠페인과 모든 광고세트를 삭제할까요?')) return;
+  S.campaigns = S.campaigns.filter(c => c.id !== cid);
+  persist(); renderDailyBudget(); toast('캠페인 삭제됨');
+}
+function addSet(cid) {
+  const c = S.campaigns.find(x => x.id === cid); if (!c) return;
+  c.sets.push({ id: newId('s'), name: 'A/B', color: nextColor(), budget: 0, spent: 0, active: true, daily: {} });
+  persist(); renderDailyBudget();
+}
+function removeSet(cid, sid) {
+  const c = S.campaigns.find(x => x.id === cid); if (!c) return;
+  if (c.sets.length <= 1) { toast('⚠️ 광고세트는 캠페인당 최소 1개 필요'); return; }
+  c.sets = c.sets.filter(s => s.id !== sid);
+  persist(); renderDailyBudget();
+}
+function setCampName(cid, v)  { const c = S.campaigns.find(x => x.id === cid); if (c) { c.name = v; persist(); renderDailyBudget(); } }
+function setCampColor(cid, v) { const c = S.campaigns.find(x => x.id === cid); if (c) { c.color = v; persist(); renderDailyBudget(); } }
+function setSetField(sid, f, v) { const r = findSet(sid); if (r) { r.set[f] = v; persist(); renderDailyBudget(); } }
+function setSetName(sid, v)  { setSetField(sid, 'name', v); }
+function setSetBudget(sid, v){ setSetField(sid, 'budget', Math.max(0, parseInt(v) || 0)); }
+function setSetSpent(sid, v) { setSetField(sid, 'spent',  Math.max(0, parseInt(v) || 0)); }
+function toggleSet(sid) { const r = findSet(sid); if (r) { r.set.active = !r.set.active; persist(); renderDailyBudget(); toast(r.set.active ? '▶️ 켜짐 — 예산 재분배' : '⏸ 꺼짐 — 잔액 재분배'); } }
+function setAdDeadline(v) { if (v) { S.adDeadline = v; persist(); renderDailyBudget(); } }
+function setWeekdayWeight(i, v) { const n = parseFloat(v); if (!isNaN(n)) { S.weekdayWeights[i] = n; persist(); renderDailyBudget(); } }
+function resetAllOverrides() { forEachSet(s => s.daily = {}); persist(); renderDailyBudget(); toast('↺ 전체 자동 재분배 완료'); }
+function clearAdOverride(sid, date) { const r = findSet(sid); if (r && r.set.daily) { delete r.set.daily[date]; persist(); renderDailyBudget(); } }
+
+// ---- 렌더 오케스트레이터 ----
+function renderDailyBudget() {
+  renderAdSettings();
+  renderCampaignManager();
+  renderAdKpis();
+  renderAdCalendar();
+  renderDailyStageTable();
+}
+
+// 설정 (마감일 + 요일 가중치)
+function renderAdSettings() {
+  const inp = document.getElementById('adDeadlineInput');
+  if (inp) inp.value = S.adDeadline;
+  const range = adRangeDates();
+  const dl = document.getElementById('adDaysLeft');
+  if (dl) dl.textContent = range.length ? `오늘부터 ${range.length}일 남음` : '⚠️ 마감일이 오늘 이전입니다';
+  const wd = ['일','월','화','수','목','금','토'];
+  document.getElementById('weekdayWeights').innerHTML = wd.map((w, i) => `
+    <div class="ww-cell">
+      <label style="color:${i===0?'var(--red)':i===6?'var(--cyan)':'var(--text3)'}">${w}</label>
+      <input type="number" step="0.05" min="0" value="${S.weekdayWeights[i]}" onchange="setWeekdayWeight(${i}, this.value)">
+    </div>`).join('');
+}
+
+// 캠페인/광고세트 관리
+function renderCampaignManager() {
+  const comp = computeAllSets();
+  let html = '';
+  S.campaigns.forEach(c => {
+    let setsHtml = '';
+    c.sets.forEach(s => {
+      const info = comp[s.id];
+      const future = info && info.active ? Object.values(info.map).reduce((a, b) => a + b, 0) : 0;
+      setsHtml += `
+        <div class="set-row ${s.active ? '' : 'off'}">
+          <label class="toggle">
+            <input type="checkbox" ${s.active ? 'checked' : ''} onchange="toggleSet('${s.id}')">
+            <span class="track"></span><span class="thumb"></span>
+          </label>
+          <span class="set-dot" style="background:${s.color}"></span>
+          <input class="set-name-input" value="${escAttr(s.name)}" onchange="setSetName('${s.id}', this.value)" title="광고세트 이름">
+          <div><div class="mini-label">남은 예산</div>
+            <input class="mini-num" type="number" step="10000" min="0" value="${s.budget}" onchange="setSetBudget('${s.id}', this.value)"></div>
+          <div><div class="mini-label">집행액(쓴 돈)</div>
+            <input class="mini-num" type="number" step="10000" min="0" value="${s.spent}" onchange="setSetSpent('${s.id}', this.value)"></div>
+          <div style="font-size:10px;color:var(--text3);min-width:96px;">${s.active ? `향후 배분 ₩${fmt(future)}` : '⏸ 일시중지'}</div>
+          <button class="icon-btn" onclick="removeSet('${c.id}','${s.id}')" title="광고세트 삭제">🗑</button>
+        </div>`;
+    });
+    html += `
+      <div class="camp-block">
+        <div class="camp-head">
+          <input type="color" value="${c.color}" onchange="setCampColor('${c.id}', this.value)" style="width:22px;height:22px;border:none;background:none;cursor:pointer;padding:0;">
+          <input class="camp-name-input" value="${escAttr(c.name)}" onchange="setCampName('${c.id}', this.value)">
+          <div style="margin-left:auto;display:flex;gap:6px;">
+            <button class="btn btn-ghost" onclick="addSet('${c.id}')" style="padding:4px 10px;">+ 광고세트(A/B)</button>
+            <button class="icon-btn" onclick="removeCampaign('${c.id}')" title="캠페인 삭제">🗑</button>
+          </div>
+        </div>
+        ${setsHtml}
+      </div>`;
+  });
+  document.getElementById('campManager').innerHTML = html;
+
+  let pausedCount = 0, freed = 0;
+  forEachSet(s => { if (!s.active) { pausedCount++; freed += Math.max(0, (s.budget || 0) - (s.spent || 0)); } });
+  document.getElementById('pausedBanner').innerHTML = pausedCount ? `
+    <div class="alert alert-info" style="margin-top:10px;">
+      <div class="alert-icon">⏸</div>
+      <div><div class="alert-title">${pausedCount}개 광고세트 일시중지</div>
+        <div class="alert-body">남은 예산 <strong>₩${fmt(freed)}</strong>가 켜져 있는 광고세트들에 자동 재분배되었습니다. 다시 켜면 즉시 복귀합니다.</div></div>
+    </div>` : '';
+}
+
+// KPI
+function renderAdKpis() {
+  const comp = computeAllSets();
+  const range = adRangeDates();
+  const t = todayYmd();
+  let totalBudget = 0, totalSpent = 0, activeCount = 0, todayTotal = 0, futureTotal = 0;
+  forEachSet(s => { totalBudget += (s.budget || 0); totalSpent += (s.spent || 0); if (s.active) activeCount++; });
+  Object.values(comp).forEach(info => {
+    if (!info.active) return;
+    todayTotal += (info.map[t] || 0);
+    futureTotal += Object.values(info.map).reduce((a, b) => a + b, 0);
+  });
+
+  document.getElementById('dailyKpiRow').innerHTML = `
+    <div class="kpi-card c-yellow">
+      <div class="kpi-label">총 남은 예산</div>
+      <div class="kpi-value" style="color:var(--yellow);font-size:18px;">₩${fmt(totalBudget)}</div>
+      <div class="kpi-sub">집행 ₩${fmt(totalSpent)}</div>
+    </div>
+    <div class="kpi-card c-accent">
+      <div class="kpi-label">향후 배분 합계</div>
+      <div class="kpi-value" style="color:var(--accent-l);font-size:18px;">₩${fmt(futureTotal)}</div>
+      <div class="kpi-sub">켜진 ${activeCount}개 · ${range.length}일</div>
+    </div>
+    <div class="kpi-card c-pink">
+      <div class="kpi-label">오늘 권장 광고비</div>
+      <div class="kpi-value" style="color:var(--s-final);font-size:18px;">₩${fmt(todayTotal)}</div>
+      <div class="kpi-sub">${t}</div>
+    </div>
+    <div class="kpi-card c-cyan">
+      <div class="kpi-label">남은 일수</div>
+      <div class="kpi-value" style="color:var(--cyan)">${range.length}일</div>
+      <div class="kpi-sub">마감 ${S.adDeadline}</div>
+    </div>
+  `;
+}
+
+// 통합 캘린더
+function renderAdCalendar() {
+  const comp = computeAllSets();
+  const range = adRangeDates();
   const today = todayYmd();
 
-  // 배정 합계 계산 (기간 내 모든 날짜의 effective 금액 합)
-  let sum = 0, dayCount = 0;
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    sum += readField(`daily:${key}:${ymd(d)}`);
-    dayCount++;
-  }
-  const diff = sum - totalBudget;
-  const sumClass = diff === 0 ? 'cal-sum-ok' : (diff > 0 ? 'cal-sum-over' : 'cal-sum-under');
-  const diffTxt = diff === 0 ? '목표와 일치 ✓' : (diff > 0 ? `목표 초과 +₩${fmt(diff)}` : `목표 미달 ₩${fmt(-diff)}`);
-  document.getElementById('dailyCalSum').innerHTML =
-    `배정 합계 <span class="${sumClass}">₩${fmt(sum)}</span> / 목표 ₩${fmt(totalBudget)} · <span class="${sumClass}">${diffTxt}</span>`;
+  let legend = '';
+  forEachSet((s, c) => {
+    legend += `<div class="legend-item ${s.active ? '' : 'paused'}">
+      <span class="dot" style="background:${s.color}"></span>${escAttr(c.name)} · ${escAttr(s.name)}${s.active ? '' : ' (중지)'}</div>`;
+  });
+  document.getElementById('calLegend').innerHTML = legend;
 
-  // 기간이 걸친 월들
+  if (!range.length) {
+    document.getElementById('adCalendar').innerHTML =
+      `<div style="text-align:center;color:var(--text3);padding:30px;">마감일(${S.adDeadline})이 오늘 이후가 되도록 설정해주세요.</div>`;
+    return;
+  }
+
+  const WD = ['일','월','화','수','목','금','토'];
+  const first = range[0], last = range[range.length - 1];
+  const start = new Date(first + 'T00:00:00'), end = new Date(last + 'T00:00:00');
+
   const months = [];
   let cur = new Date(start.getFullYear(), start.getMonth(), 1);
   const lastM = new Date(end.getFullYear(), end.getMonth(), 1);
   while (cur <= lastM) { months.push(new Date(cur)); cur.setMonth(cur.getMonth() + 1); }
+
+  const activeSetList = [];
+  forEachSet(s => { if (s.active) activeSetList.push(s); });
 
   let html = '';
   months.forEach(m => {
     const y = m.getFullYear(), mo = m.getMonth();
     const firstWd = new Date(y, mo, 1).getDay();
     const daysInMonth = new Date(y, mo + 1, 0).getDate();
-
-    const heads = WEEKDAYS.map((w, i) =>
-      `<div class="cal-head ${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</div>`).join('');
-
+    const heads = WD.map((w, i) => `<div class="cal-head ${i===0?'sun':i===6?'sat':''}">${w}</div>`).join('');
     let cells = '';
     for (let i = 0; i < firstWd; i++) cells += `<div></div>`;
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${y}-${String(mo + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const dateStr = `${y}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       const wd = new Date(y, mo, day).getDay();
-      const inRange = dateStr >= S.campStart && dateStr <= S.campEnd;
-      const wdClass = wd === 0 ? 'sun' : wd === 6 ? 'sat' : '';
-
-      if (!inRange) {
-        cells += `<div class="cal-cell out"><div class="cal-date ${wdClass}">${day}</div></div>`;
-      } else {
-        const val = readField(`daily:${key}:${dateStr}`);
-        const overridden = S.dailyBudget[key] && S.dailyBudget[key][dateStr] != null;
-        cells += `
-          <div class="cal-cell ${dateStr === today ? 'today' : ''}">
-            <div class="cal-date ${wdClass}">${day}${overridden ? ' ✎' : ''}</div>
-            <span class="cal-budget editable" style="color:${color}"
-              data-edit="daily:${key}:${dateStr}" data-type="won"
-              title="더블클릭하여 ${dateStr} 광고비 수정">₩${fmt(val)}</span>
-          </div>`;
-      }
+      const wdClass = wd===0?'sun':wd===6?'sat':'';
+      const inRange = dateStr >= first && dateStr <= last;
+      if (!inRange) { cells += `<div class="cal-cell out"><div class="cal-date ${wdClass}">${day}</div></div>`; continue; }
+      let setLines = '', dayTotal = 0;
+      activeSetList.forEach(s => {
+        const info = comp[s.id]; const amt = info ? (info.map[dateStr] || 0) : 0; dayTotal += amt;
+        const locked = info && info.lockedSet && info.lockedSet.has(dateStr);
+        setLines += `<div class="cal-set">
+          <span class="dot" style="background:${s.color}"></span>
+          <span class="amt editable ${locked?'locked':''}" style="color:${s.color}" data-edit="ad:${s.id}:${dateStr}" data-type="won" title="더블클릭하여 ${escAttr(s.name)} ${dateStr} 광고비 고정">₩${fmt(amt)}</span>
+          ${locked ? `<span class="cal-clear" onclick="clearAdOverride('${s.id}','${dateStr}')" title="고정 해제">✕</span>` : ''}
+        </div>`;
+      });
+      cells += `
+        <div class="cal-cell ${dateStr===today?'today':''}">
+          <div class="cal-date ${wdClass}">${day}</div>
+          ${setLines}
+          <div class="cal-total">₩${fmt(dayTotal)}</div>
+        </div>`;
     }
-
-    html += `
-      <div class="cal-month">
-        <div class="cal-month-label" style="color:${color}">${y}년 ${mo + 1}월</div>
-        <div class="cal-grid">${heads}${cells}</div>
-      </div>`;
+    html += `<div class="cal-month"><div class="cal-month-label">${y}년 ${mo+1}월</div><div class="cal-grid">${heads}${cells}</div></div>`;
   });
-
-  document.getElementById('dailyCalendar').innerHTML = html;
+  document.getElementById('adCalendar').innerHTML = html;
 }
+
+// 단계별 일일 목표 테이블 (퍼널 인원 ÷ 남은 일수)
+function renderDailyStageTable() {
+  const ikiTrack = calcForward(S.ikiDB, S.rates.iki);
+  const jikTrack = calcForward(S.jikDB, S.rates.jik);
+  const days = Math.max(1, adRangeDates().length);
+  const stageNames = ['가능 DB','찾기','합자','육','영','센확'];
+  const stageColors = ['#0891b2','#f59e0b','#22c55e','#06b6d4','#8b5cf6','#ec4899'];
+  const totals = STAGES.map((_, i) => ikiTrack[i] + jikTrack[i]);
+
+  let th = `<tr><th style="text-align:left;">단계</th><th>전체 목표</th><th>일일 목표</th><th>이키 일일</th><th>직무 일일</th></tr>`;
+  let rows = '';
+  stageNames.forEach((sn, i) => {
+    const color = stageColors[i];
+    rows += `<tr>
+      <td><div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></div><span>${sn}</span></div></td>
+      <td><strong>${totals[i]}명</strong></td>
+      <td style="color:${color};font-weight:800;">${(totals[i]/days).toFixed(2)}명</td>
+      <td style="color:var(--text2);">${(ikiTrack[i]/days).toFixed(2)}명</td>
+      <td style="color:var(--text2);">${(jikTrack[i]/days).toFixed(2)}명</td>
+    </tr>`;
+  });
+  document.getElementById('dailyStageTable').innerHTML = `<thead>${th}</thead><tbody>${rows}</tbody>`;
+}
+
+// (구버전 일일예산/캘린더 제거됨 — 위의 캠페인 기반 통합 캘린더로 대체)
 
 // ================================================================
 //  RENDER MONTHLY TABLE
@@ -1810,32 +1912,28 @@ const EDIT_LABELS = {
 };
 let _editing = null;
 
-// 필드 경로 읽기/쓰기 (예: "ikiTarget", "actual:iki:2", "daily:iki:2026-07-01")
-function evenDaily(k) {
-  const b = k === 'iki' ? S.ikiAdBudget : S.jikAdBudget;
-  return Math.round(b / campaignDays());
-}
+// 필드 경로 읽기/쓰기 (예: "ikiTarget", "actual:iki:2", "ad:s1:2026-07-01")
 function readField(p) {
   if (p.startsWith('actual:')) { const [, k, i] = p.split(':'); return S.actual[k][+i]; }
-  if (p.startsWith('daily:'))  { const [, k, date] = p.split(':');
-    return (S.dailyBudget[k] && S.dailyBudget[k][date] != null) ? S.dailyBudget[k][date] : evenDaily(k);
+  if (p.startsWith('ad:')) { const [, sid, date] = p.split(':');
+    const comp = computeAllSets(); return (comp[sid] && comp[sid].map[date] != null) ? comp[sid].map[date] : 0;
   }
   return S[p];
 }
 function writeField(p, v) {
   if (p.startsWith('actual:')) { const [, k, i] = p.split(':'); S.actual[k][+i] = v; return; }
-  if (p.startsWith('daily:'))  { const [, k, date] = p.split(':'); S.dailyBudget[k][date] = v; return; }
+  if (p.startsWith('ad:')) { const [, sid, date] = p.split(':'); const r = findSet(sid); if (r) { r.set.daily = r.set.daily || {}; r.set.daily[date] = v; } return; }
   S[p] = v;
 }
-function isField(p) { return p.startsWith('actual:') || p.startsWith('daily:') || (p in S); }
+function isField(p) { return p.startsWith('actual:') || p.startsWith('ad:') || (p in S); }
 function fieldLabel(p) {
   if (p.startsWith('actual:')) {
     const [, k, i] = p.split(':');
     return `${k === 'iki' ? '이키' : '직무'} ${STAGES[+i].label} 실적`;
   }
-  if (p.startsWith('daily:')) {
-    const [, k, date] = p.split(':');
-    return `${date} ${k === 'iki' ? '이키' : '직무'} 광고비`;
+  if (p.startsWith('ad:')) {
+    const [, sid, date] = p.split(':'); const r = findSet(sid);
+    return `${date} ${r ? r.set.name : ''} 광고비 고정`;
   }
   return EDIT_LABELS[p] || p;
 }
